@@ -120,6 +120,9 @@ describe('assignEnvironment', () => {
 
       expect(parsedCookie).toHaveProperty('foo');
       expect(parsedCookie.foo).toBe('bar');
+
+      expect(parsedCookie).toHaveProperty('abc');
+      expect(parsedCookie.abc).toBe('xyz');
     });
   });
 });
