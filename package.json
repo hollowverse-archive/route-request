@@ -9,7 +9,7 @@
   "private": true,
   "scripts": {
     "pretest": "run-p -l --aggregate-output validate-filenames lint",
-    "test": "jest",
+    "test": "jest --colors",
     "check-ts/src": "tsc --project ./src --noEmit",
     "check-ts/root": "tsc --project ./ --noEmit",
     "check-ts": "run-p 'check-ts/*'",
