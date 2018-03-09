@@ -20,7 +20,6 @@ async function main() {
   const buildCommands = ['yarn clean', 'yarn build'];
   const deploymentCommands = [
     () => createZipFile('build.zip', ['dist/**/*'], ['secrets/**/*.enc']),
-    // 'aws lambda update-function-code --function-name assignEnvironment --zip-file fileb://build.zip --publish',
     async () => {
       const cloudfront = new awsSdk.CloudFront({
         apiVersion: '2017-03-25',
