@@ -7,7 +7,6 @@ const environments = {
   beta: 0.25,
 };
 
-// tslint:disable no-console
 export const assignEnvironment: Handler<CloudFrontRequestEvent> = (
   event,
   _context,
@@ -23,7 +22,7 @@ export const assignEnvironment: Handler<CloudFrontRequestEvent> = (
       for (const { value } of cookieHeaders) {
         parsedCookie = cookie.parse(value);
         if (parsedCookie.env) {
-          console.info('Request already has an environment, doing nothing');
+          // Request already has an environment, doing nothing;
           done(null, request);
 
           return;
@@ -50,7 +49,6 @@ export const assignEnvironment: Handler<CloudFrontRequestEvent> = (
       };
     }
 
-    console.log(request.headers.cookie);
     done(null, request);
   } catch (error) {
     console.error(error);
