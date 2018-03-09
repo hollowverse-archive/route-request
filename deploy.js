@@ -17,8 +17,9 @@ const { IS_PULL_REQUEST, CLOUDFRONT_DISTRIBUTION_ID } = shelljs.env;
 const isPullRequest = IS_PULL_REQUEST !== 'false';
 
 async function main() {
-  const buildCommands = ['yarn clean', 'yarn build'];
+  const buildCommands = ['yarn clean', 'yarn test'];
   const deploymentCommands = [
+    'yarn build',
     () => createZipFile('build.zip', ['dist/**/*'], ['secrets/**/*.enc']),
     async () => {
       const cloudfront = new awsSdk.CloudFront({
