@@ -28,7 +28,7 @@ const createTestContext = async (
       logGroupName: 'any',
       awsRequestId: '534c650d-3d7b-4d4e-afce-f71d81b4f25c',
       logStreamName: 'any',
-      getRemainingTimeInMillis: () => 1000,
+      getRemainingTimeInMillis: jest.fn(() => 1000),
       done: jest.fn(),
       fail: jest.fn(),
       succeed: jest.fn(),
