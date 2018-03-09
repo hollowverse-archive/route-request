@@ -11,7 +11,7 @@ module.exports = {
     assignEnvironment: [path.join(__dirname, 'src', 'assignEnvironment.ts')],
   },
   target: 'node',
-  devtool: 'eval',
+  devtool: 'source-map',
   output: {
     libraryTarget: 'commonjs',
     path: path.resolve(__dirname, 'dist'),
