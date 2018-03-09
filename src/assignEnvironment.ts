@@ -22,7 +22,7 @@ export const assignEnvironment: Handler<CloudFrontRequestEvent> = (
       for (const { value } of cookieHeaders) {
         parsedCookie = cookie.parse(value);
         if (parsedCookie.env) {
-          // Request already has an environment, doing nothing;
+          // Request already has an environment, doing nothing
           done(null, request);
 
           return;
