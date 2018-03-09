@@ -10,9 +10,11 @@ const { createZipFile } = require('@hollowverse/common/helpers/createZipFile');
 const fs = require('fs');
 const awsSdk = require('aws-sdk');
 
-awsSdk.config.region = 'us-east-1';
-
-const { IS_PULL_REQUEST, CLOUDFRONT_DISTRIBUTION_ID } = shelljs.env;
+const {
+  IS_PULL_REQUEST,
+  AWS_REGION = 'us-east-1',
+  CLOUDFRONT_DISTRIBUTION_ID,
+} = shelljs.env;
 
 const isPullRequest = IS_PULL_REQUEST !== 'false';
 
@@ -24,11 +26,11 @@ async function main() {
     async () => {
       const cloudfront = new awsSdk.CloudFront({
         apiVersion: '2017-03-25',
-        region: 'us-east-1',
+        region: AWS_REGION,
       });
       const lambda = new awsSdk.Lambda({
         apiVersion: '2015-03-31',
-        region: 'us-east-1',
+        region: AWS_REGION,
       });
 
       const { FunctionArn } = await lambda
