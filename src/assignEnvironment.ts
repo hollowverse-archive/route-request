@@ -25,6 +25,7 @@ export const assignEnvironment: Handler<CloudFrontRequestEvent> = (
         if (parsedCookie.env) {
           console.info('Request already has an environment, doing nothing');
           done(null, request);
+
           return;
         }
       }

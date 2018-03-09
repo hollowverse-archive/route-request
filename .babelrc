@@ -1,0 +1,19 @@
+{
+  "presets": [
+    [
+      "@babel/env",
+      {
+        "targets": {
+          "node": "6.10"
+        },
+        "useBuiltIns": "usage"
+      }
+    ]
+  ],
+  "plugins": [
+    "@babel/proposal-object-rest-spread",
+    "@babel/transform-runtime"
+  ],
+  "sourceMap": "both",
+  "retainLines": true
+}
