@@ -1,6 +1,7 @@
 import { Handler, CloudFrontRequestEvent } from 'aws-lambda'; // tslint:disable-line:no-implicit-dependencies
 import cookie from 'cookie';
 import weighted from 'weighted';
+import isBot from 'is-bot';
 
 const environments = {
   master: 0.75,
@@ -30,9 +31,17 @@ export const assignEnvironment: Handler<CloudFrontRequestEvent> = (
       }
     }
 
-    const randomEnv = weighted.select<string>(environments);
+    const userAgent =
+      request.headers['user-agent'] &&
+      request.headers['user-agent'][0] &&
+      request.headers['user-agent'][0].value;
 
-    const serializedCookie = cookie.serialize('env', randomEnv, {
+    const environmentToAssign =
+      userAgent && isBot(userAgent)
+        ? 'master'
+        : weighted.select<string>(environments);
+
+    const serializedCookie = cookie.serialize('env', environmentToAssign, {
       maxAge: 24 * 60 * 60 * 1000,
       httpOnly: true,
       secure: true,
