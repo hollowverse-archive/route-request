@@ -3,7 +3,7 @@
 import bluebird from 'bluebird';
 import { assignEnvironment } from './assignEnvironment';
 import { Context, CloudFrontRequestEvent, CloudFrontRequest } from 'aws-lambda';
-import { merge } from 'lodash';
+import { merge, times } from 'lodash';
 import cookie from 'cookie';
 
 type DeepPartial<T> = { [P in keyof T]?: DeepPartial<T[P]> };
@@ -85,6 +85,7 @@ describe('assignEnvironment', () => {
       );
 
       expect(parsedCookie).toHaveProperty('env');
+      expect(parsedCookie.env).toMatch(/beta|master/);
     });
   });
 
@@ -111,6 +112,7 @@ describe('assignEnvironment', () => {
       );
 
       expect(parsedCookie).toHaveProperty('env');
+      expect(parsedCookie.env).toMatch(/beta|master/);
     });
 
     it('does not remove other cookies', async () => {
@@ -123,6 +125,43 @@ describe('assignEnvironment', () => {
 
       expect(parsedCookie).toHaveProperty('abc');
       expect(parsedCookie.abc).toBe('xyz');
+    });
+  });
+
+  describe('for bots', () => {
+    it('should always set `env` cookie to master', async () => {
+      await bluebird.map(
+        times(10000),
+        async () => {
+          context = await createTestContext({
+            Records: [
+              {
+                cf: {
+                  request: {
+                    headers: {
+                      'user-agent': [
+                        {
+                          key: 'user-agent',
+                          value:
+                            'Googlebot/2.1 (+http://www.googlebot.com/bot.html)',
+                        },
+                      ],
+                    },
+                  },
+                },
+              },
+            ],
+          });
+
+          const parsedCookie = cookie.parse(
+            context.response.headers.cookie[0].value,
+          );
+
+          expect(parsedCookie).toHaveProperty('env');
+          expect(parsedCookie.env).toMatch('master');
+        },
+        { concurrency: 500 },
+      );
     });
   });
 });

@@ -3627,6 +3627,10 @@ is-binary-path@^1.0.0:
   dependencies:
     binary-extensions "^1.0.0"
 
+is-bot@^0.0.1:
+  version "0.0.1"
+  resolved "https://registry.yarnpkg.com/is-bot/-/is-bot-0.0.1.tgz#cb295c8e2c04b8a6c10732d475391077e2697f4a"
+
 is-buffer@^1.1.4, is-buffer@^1.1.5:
   version "1.1.6"
   resolved "https://registry.yarnpkg.com/is-buffer/-/is-buffer-1.1.6.tgz#efaa2ea9daa0d7ab2ea13a97b2b8ad51fefbe8be"
