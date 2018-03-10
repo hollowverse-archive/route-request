@@ -50,27 +50,27 @@ async function main() {
           })
           .promise();
 
-        let associations = [
-          ...DistributionConfig.DefaultCacheBehavior.LambdaFunctionAssociations
-            .Items,
-        ];
+        const associations =
+          DistributionConfig.DefaultCacheBehavior.LambdaFunctionAssociations;
+
+        let associationItems = associations ? [...associations.Items] : [];
 
         const index = findIndex(
-          associations,
+          associationItems,
           ({ EventType, LambdaFunctionARN }) =>
             EventType === 'viewer-request' &&
             LambdaFunctionARN.match(FunctionArn.replace(/:\d+$/i, '')),
         );
 
         if (index >= 0) {
-          associations[index].LambdaFunctionARN = FunctionArn;
+          associationItems[index].LambdaFunctionARN = FunctionArn;
         } else {
-          associations = [
+          associationItems = [
             {
               EventType: 'viewer-request',
               LambdaFunctionARN: FunctionArn,
             },
-            ...associations,
+            ...associationItems,
           ];
         }
 
@@ -83,8 +83,8 @@ async function main() {
               DefaultCacheBehavior: {
                 ...DistributionConfig.DefaultCacheBehavior,
                 LambdaFunctionAssociations: {
-                  Quantity: associations.length,
-                  Items: associations,
+                  Quantity: associationItems.length,
+                  Items: associationItems,
                 },
               },
             },
