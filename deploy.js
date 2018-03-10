@@ -9,6 +9,7 @@ const {
 const { createZipFile } = require('@hollowverse/common/helpers/createZipFile');
 const fs = require('fs');
 const awsSdk = require('aws-sdk');
+const { findIndex } = require('lodash');
 
 const {
   IS_PULL_REQUEST,
@@ -28,46 +29,71 @@ async function main() {
         apiVersion: '2017-03-25',
         region: AWS_REGION,
       });
+
       const lambda = new awsSdk.Lambda({
         apiVersion: '2015-03-31',
         region: AWS_REGION,
       });
 
-      const { FunctionArn } = await lambda
-        .updateFunctionCode({
-          FunctionName: 'assignEnvironment',
-          Publish: true,
-          ZipFile: fs.readFileSync('build.zip'),
-        })
-        .promise();
+      try {
+        const { FunctionArn } = await lambda
+          .updateFunctionCode({
+            FunctionName: 'assignEnvironment',
+            Publish: true,
+            ZipFile: fs.readFileSync('build.zip'),
+          })
+          .promise();
 
-      const { DistributionConfig, ETag } = await cloudfront
-        .getDistributionConfig({
-          Id: CLOUDFRONT_DISTRIBUTION_ID,
-        })
-        .promise();
+        const { DistributionConfig, ETag } = await cloudfront
+          .getDistributionConfig({
+            Id: CLOUDFRONT_DISTRIBUTION_ID,
+          })
+          .promise();
 
-      await cloudfront
-        .updateDistribution({
-          Id: CLOUDFRONT_DISTRIBUTION_ID,
-          IfMatch: ETag,
-          DistributionConfig: {
-            ...DistributionConfig,
-            DefaultCacheBehavior: {
-              ...DistributionConfig.DefaultCacheBehavior,
-              LambdaFunctionAssociations: {
-                Quantity: 1,
-                Items: [
-                  {
-                    EventType: 'viewer-request',
-                    LambdaFunctionARN: FunctionArn,
-                  },
-                ],
+        const associations =
+          DistributionConfig.DefaultCacheBehavior.LambdaFunctionAssociations;
+
+        let associationItems = associations ? [...associations.Items] : [];
+
+        const index = findIndex(
+          associationItems,
+          ({ EventType, LambdaFunctionARN }) =>
+            EventType === 'viewer-request' &&
+            LambdaFunctionARN &&
+            LambdaFunctionARN.match(FunctionArn.replace(/:\d+$/i, '')),
+        );
+
+        if (index >= 0) {
+          associationItems[index].LambdaFunctionARN = FunctionArn;
+        } else {
+          associationItems = [
+            {
+              EventType: 'viewer-request',
+              LambdaFunctionARN: FunctionArn,
+            },
+            ...associationItems,
+          ];
+        }
+
+        await cloudfront
+          .updateDistribution({
+            Id: CLOUDFRONT_DISTRIBUTION_ID,
+            IfMatch: ETag,
+            DistributionConfig: {
+              ...DistributionConfig,
+              DefaultCacheBehavior: {
+                ...DistributionConfig.DefaultCacheBehavior,
+                LambdaFunctionAssociations: {
+                  Quantity: associationItems.length,
+                  Items: associationItems,
+                },
               },
             },
-          },
-        })
-        .promise();
+          })
+          .promise();
+      } catch (error) {
+        console.error(error.message);
+      }
     },
   ];
 
