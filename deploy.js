@@ -59,6 +59,7 @@ async function main() {
           associationItems,
           ({ EventType, LambdaFunctionARN }) =>
             EventType === 'viewer-request' &&
+            LambdaFunctionARN &&
             LambdaFunctionARN.match(FunctionArn.replace(/:\d+$/i, '')),
         );
 
