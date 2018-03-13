@@ -545,6 +545,17 @@
     minimatch "^3.0.4"
     shelljs "^0.7.8"
 
+"@hollowverse/common@^3.2.6":
+  version "3.2.6"
+  resolved "https://registry.yarnpkg.com/@hollowverse/common/-/common-3.2.6.tgz#b0b07502698ee53e73d57c0cc1290914a97b1800"
+  dependencies:
+    "@babel/runtime" "^7.0.0-beta.40"
+    glob "^7.1.2"
+    jszip "^3.1.4"
+    lodash "^4.17.4"
+    minimatch "^3.0.4"
+    shelljs "^0.7.8"
+
 "@hollowverse/validate-filenames@^1.3.7":
   version "1.3.7"
   resolved "https://registry.yarnpkg.com/@hollowverse/validate-filenames/-/validate-filenames-1.3.7.tgz#2b0b11b5b03faf4d3ce16bece1d8097cadeb3757"
