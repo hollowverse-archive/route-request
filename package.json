@@ -48,7 +48,6 @@
     "weighted": "^0.3.0"
   },
   "resolutions": {
-    "webpack-sources": "1.0.1",
     "babel-core": "^7.0.0-bridge.0"
   },
   "devDependencies": {
@@ -78,8 +77,6 @@
     "aws-sdk": "^2.205.0",
     "babel-eslint": "^8.2.1",
     "babel-loader": "^8.0.0-beta.2",
-    "babel-minify-webpack-plugin": "^0.3.0",
-    "babel-preset-minify": "^0.3.0",
     "bluebird": "^3.5.1",
     "common-tags": "^1.7.2",
     "del-cli": "^1.1.0",
@@ -101,7 +98,7 @@
     "stylelint-config-standard": "^17.0.0",
     "stylelint-no-unsupported-browser-features": "^1.0.0",
     "ts-jest": "^22.4.1",
-    "ts-loader": "3",
+    "ts-loader": "^4.0.1",
     "tslint": "^5.9.1",
     "tslint-config-prettier": "^1.8.0",
     "tslint-eslint-rules": "^5.0.0",
@@ -109,7 +106,8 @@
     "tslint-react": "^3.5.1",
     "typescript": "^2.7.2",
     "typescript-eslint-parser": "^14.0.0",
-    "webpack": "3",
+    "webpack": "^4.1.1",
+    "webpack-cli": "^2.0.12",
     "yarnhook": "^0.1.1"
   },
   "lint-staged": {

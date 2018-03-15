@@ -2,11 +2,10 @@
 
 const webpack = require('webpack');
 const path = require('path');
-const BabelMinifyPlugin = require('babel-minify-webpack-plugin');
-const { mapValues } = require('lodash');
-const { ifProd } = require('./env');
+const { isProd } = require('./env');
 
 module.exports = {
+  mode: isProd ? 'production' : 'development',
   entry: {
     assignEnvironment: [path.join(__dirname, 'src', 'assignEnvironment.ts')],
   },
@@ -38,18 +37,6 @@ module.exports = {
   },
   plugins: [
     new webpack.WatchIgnorePlugin([/node_modules/]),
-    new webpack.NoEmitOnErrorsPlugin(),
-    new webpack.optimize.ModuleConcatenationPlugin(),
-    new webpack.optimize.OccurrenceOrderPlugin(),
     new webpack.optimize.AggressiveMergingPlugin(),
-    new webpack.DefinePlugin(
-      mapValues(
-        {
-          'process.env.NODE_ENV': process.env.NODE_ENV,
-        },
-        v => JSON.stringify(v),
-      ),
-    ),
-    ...ifProd([new BabelMinifyPlugin()]),
   ],
 };
