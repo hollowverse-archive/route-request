@@ -23,6 +23,11 @@
     "lint-staged": "lint-staged"
   },
   "jest": {
+    "globals": {
+      "ts-jest": {
+        "useBabelrc": true
+      }
+    },
     "transform": {
       "^.+\\.tsx?$": "<rootDir>/node_modules/ts-jest/preprocessor.js"
     },
