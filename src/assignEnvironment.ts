@@ -37,7 +37,7 @@ export const assignEnvironment: Handler<CloudFrontRequestEvent> = (
       request.headers['user-agent'][0].value;
 
     const environmentToAssign =
-      userAgent && isBot(userAgent)
+      userAgent && (isBot(userAgent) || /webpagetest/i.test(userAgent))
         ? 'master'
         : weighted.select<string>(environments);
 
