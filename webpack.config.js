@@ -50,6 +50,11 @@ module.exports = {
         v => JSON.stringify(v),
       ),
     ),
-    ...ifProd([new BabelMinifyPlugin()]),
+    ...ifProd([
+      new BabelMinifyPlugin({
+        mangle: false, // Buggy
+        removeUndefined: false, // Buggy
+      }),
+    ]),
   ],
 };

@@ -20,9 +20,8 @@ const {
 const isPullRequest = IS_PULL_REQUEST !== 'false';
 
 async function main() {
-  const buildCommands = ['yarn clean', 'yarn test'];
+  const buildCommands = ['yarn clean', 'yarn test', 'yarn build'];
   const deploymentCommands = [
-    'yarn build',
     () => createZipFile('build.zip', ['dist/**/*'], ['secrets/**/*.enc']),
     async () => {
       const cloudfront = new awsSdk.CloudFront({
