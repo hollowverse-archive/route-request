@@ -1,5 +1,6 @@
-// tslint:disable:no-non-null-assertion
+// tslint:disable:no-non-null-assertion no-implicit-dependencies
 import { TestContext, createTestContext, testBot } from './testHelpers';
+import { oneLine } from 'common-tags';
 
 describe('assignEnvironment', () => {
   let context: TestContext;
@@ -11,19 +12,24 @@ describe('assignEnvironment', () => {
   describe('for requests with an existing `env` cookie', () => {
     beforeEach(async () => {
       context = await createTestContext({
-        Records: [
-          {
-            cf: {
-              request: {
-                headers: {
-                  cookie: [
-                    { key: 'cookie', value: 'foo=bar; env=whatever; abc=xyz;' },
-                  ],
+        eventOverrides: {
+          Records: [
+            {
+              cf: {
+                request: {
+                  headers: {
+                    cookie: [
+                      {
+                        key: 'cookie',
+                        value: 'foo=bar; env=whatever; abc=xyz;',
+                      },
+                    ],
+                  },
                 },
               },
             },
-          },
-        ],
+          ],
+        },
       });
     });
 
@@ -48,17 +54,19 @@ describe('assignEnvironment', () => {
   describe('for requests with an existing Cookie header, but without an `env` cookie,', () => {
     beforeEach(async () => {
       context = await createTestContext({
-        Records: [
-          {
-            cf: {
-              request: {
-                headers: {
-                  cookie: [{ key: 'cookie', value: 'foo=bar; abc=xyz;' }],
+        eventOverrides: {
+          Records: [
+            {
+              cf: {
+                request: {
+                  headers: {
+                    cookie: [{ key: 'cookie', value: 'foo=bar; abc=xyz;' }],
+                  },
                 },
               },
             },
-          },
-        ],
+          ],
+        },
       });
     });
 
@@ -82,7 +90,15 @@ describe('assignEnvironment', () => {
     });
 
     it('treats WebPageTest as a bot and always sets `env` to master', async () => {
-      await testBot();
+      // tslint:disable-next-line:no-multiline-string
+      await testBot(oneLine`
+        Mozilla/5.0 (Linux;
+        Android 4.4.2; Nexus 4 Build/KOT49H)
+        AppleWebKit/537.36 (KHTML, like Gecko)
+        Chrome/65.0.3325.162
+        Mobile Safari/537.36
+        WebPageTest
+      `);
     });
   });
 });
