@@ -75,6 +75,7 @@
     "@types/webpack": "^4.0.0",
     "@types/weighted": "^0.0.5",
     "aws-sdk": "^2.205.0",
+    "babel-core": "^7.0.0-bridge.0",
     "babel-eslint": "^8.2.1",
     "babel-loader": "^8.0.0-beta.2",
     "babel-minify-webpack-plugin": "^0.3.0",
