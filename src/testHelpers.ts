@@ -8,6 +8,11 @@ import { merge, times, uniq } from 'lodash';
 
 type DeepPartial<T> = { [P in keyof T]?: DeepPartial<T[P]> };
 
+export type CreateTestContextOptions = {
+  eventOverrides?: DeepPartial<CloudFrontRequestEvent>;
+  contextOverrides?: DeepPartial<Context>;
+};
+
 export type TestContext = Readonly<{
   event: CloudFrontRequestEvent;
   result: CloudFrontRequest;
@@ -15,10 +20,10 @@ export type TestContext = Readonly<{
   parsedCookies?: Array<Record<string, string> | undefined>;
 }>;
 
-export const createTestContext = async (
-  eventOverrides: DeepPartial<CloudFrontRequestEvent> = {},
-  contextOverrides: DeepPartial<Context> = {},
-): Promise<TestContext> => {
+export const createTestContext = async ({
+  eventOverrides,
+  contextOverrides,
+}: CreateTestContextOptions = {}): Promise<TestContext> => {
   const context: Context = merge(
     {
       functionName: 'assignEnvironment',
@@ -73,25 +78,30 @@ export const createTestContext = async (
   return { context, result, event, parsedCookies };
 };
 
-export const testBot = async (numTests = 5000) => {
+export const testBot = async (
+  userAgent = 'Googlebot/2.1 (+http://www.googlebot.com/bot.html)',
+  numTests = 5000,
+) => {
   const results = await bluebird.map(times(numTests), async () => {
     const context = await createTestContext({
-      Records: [
-        {
-          cf: {
-            request: {
-              headers: {
-                'user-agent': [
-                  {
-                    key: 'user-agent',
-                    value: 'Googlebot/2.1 (+http://www.googlebot.com/bot.html)',
-                  },
-                ],
+      eventOverrides: {
+        Records: [
+          {
+            cf: {
+              request: {
+                headers: {
+                  'user-agent': [
+                    {
+                      key: 'user-agent',
+                      value: userAgent,
+                    },
+                  ],
+                },
               },
             },
           },
-        },
-      ],
+        ],
+      },
     });
 
     const parsedCookie = cookie.parse(context.result.headers.cookie[0].value);
