@@ -34,65 +34,61 @@ async function main() {
         region: AWS_REGION,
       });
 
-      try {
-        const { FunctionArn } = await lambda
-          .updateFunctionCode({
-            FunctionName: 'assignEnvironment',
-            Publish: true,
-            ZipFile: fs.readFileSync('build.zip'),
-          })
-          .promise();
+      const { FunctionArn } = await lambda
+        .updateFunctionCode({
+          FunctionName: 'assignEnvironment',
+          Publish: true,
+          ZipFile: fs.readFileSync('build.zip'),
+        })
+        .promise();
 
-        const { DistributionConfig, ETag } = await cloudfront
-          .getDistributionConfig({
-            Id: CLOUDFRONT_DISTRIBUTION_ID,
-          })
-          .promise();
+      const { DistributionConfig, ETag } = await cloudfront
+        .getDistributionConfig({
+          Id: CLOUDFRONT_DISTRIBUTION_ID,
+        })
+        .promise();
 
-        const associations =
-          DistributionConfig.DefaultCacheBehavior.LambdaFunctionAssociations;
+      const associations =
+        DistributionConfig.DefaultCacheBehavior.LambdaFunctionAssociations;
 
-        let associationItems = associations ? [...associations.Items] : [];
+      let associationItems = associations ? [...associations.Items] : [];
 
-        const index = findIndex(
-          associationItems,
-          ({ EventType, LambdaFunctionARN }) =>
-            EventType === 'viewer-request' &&
-            LambdaFunctionARN &&
-            LambdaFunctionARN.match(FunctionArn.replace(/:\d+$/i, '')),
-        );
+      const index = findIndex(
+        associationItems,
+        ({ EventType, LambdaFunctionARN }) =>
+          EventType === 'viewer-request' &&
+          LambdaFunctionARN &&
+          LambdaFunctionARN.match(FunctionArn.replace(/:\d+$/i, '')),
+      );
 
-        if (index >= 0) {
-          associationItems[index].LambdaFunctionARN = FunctionArn;
-        } else {
-          associationItems = [
-            {
-              EventType: 'viewer-request',
-              LambdaFunctionARN: FunctionArn,
-            },
-            ...associationItems,
-          ];
-        }
+      if (index >= 0) {
+        associationItems[index].LambdaFunctionARN = FunctionArn;
+      } else {
+        associationItems = [
+          {
+            EventType: 'viewer-request',
+            LambdaFunctionARN: FunctionArn,
+          },
+          ...associationItems,
+        ];
+      }
 
-        await cloudfront
-          .updateDistribution({
-            Id: CLOUDFRONT_DISTRIBUTION_ID,
-            IfMatch: ETag,
-            DistributionConfig: {
-              ...DistributionConfig,
-              DefaultCacheBehavior: {
-                ...DistributionConfig.DefaultCacheBehavior,
-                LambdaFunctionAssociations: {
-                  Quantity: associationItems.length,
-                  Items: associationItems,
-                },
+      await cloudfront
+        .updateDistribution({
+          Id: CLOUDFRONT_DISTRIBUTION_ID,
+          IfMatch: ETag,
+          DistributionConfig: {
+            ...DistributionConfig,
+            DefaultCacheBehavior: {
+              ...DistributionConfig.DefaultCacheBehavior,
+              LambdaFunctionAssociations: {
+                Quantity: associationItems.length,
+                Items: associationItems,
               },
             },
-          })
-          .promise();
-      } catch (error) {
-        console.error(error.message);
-      }
+          },
+        })
+        .promise();
     },
   ];
 
