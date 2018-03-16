@@ -13,17 +13,17 @@ export type CreateTestContextOptions = {
   contextOverrides?: DeepPartial<Context>;
 };
 
-export type TestContext = Readonly<{
+export type TestResult = Readonly<{
   event: CloudFrontRequestEvent;
-  result: CloudFrontRequest;
+  modifiedRequest: CloudFrontRequest;
   context: Context;
   parsedCookies?: Array<Record<string, string> | undefined>;
 }>;
 
-export const createTestContext = async ({
+export const runTest = async ({
   eventOverrides,
   contextOverrides,
-}: CreateTestContextOptions = {}): Promise<TestContext> => {
+}: CreateTestContextOptions = {}): Promise<TestResult> => {
   const context: Context = merge(
     {
       functionName: 'assignEnvironment',
@@ -65,23 +65,23 @@ export const createTestContext = async ({
     eventOverrides,
   );
 
-  const result = (await bluebird.fromCallback(cb => {
+  const modifiedRequest = (await bluebird.fromCallback(cb => {
     assignEnvironment(event, context, cb);
   })) as CloudFrontRequest;
 
-  const parsedCookies = result.headers.cookie
-    ? result.headers.cookie.map(({ value }) => {
+  const parsedCookies = modifiedRequest.headers.cookie
+    ? modifiedRequest.headers.cookie.map(({ value }) => {
         return value ? cookie.parse(value) : undefined;
       })
     : undefined;
 
-  return { context, result, event, parsedCookies };
+  return { context, modifiedRequest, event, parsedCookies };
 };
 
 export const testManyTimes = async (
   numTests = 1000,
   options?: CreateTestContextOptions,
-) => bluebird.map(times(numTests), async () => createTestContext(options));
+) => bluebird.map(times(numTests), async () => runTest(options));
 
 export const testBot = async (
   userAgent = 'Googlebot/2.1 (+http://www.googlebot.com/bot.html)',
