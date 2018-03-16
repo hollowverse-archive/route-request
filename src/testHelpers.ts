@@ -1,4 +1,4 @@
-// tslint:disable no-implicit-dependencies
+// tslint:disable no-implicit-dependencies no-non-null-assertion
 
 import bluebird from 'bluebird';
 import cookie from 'cookie';
@@ -13,17 +13,17 @@ export type CreateTestContextOptions = {
   contextOverrides?: DeepPartial<Context>;
 };
 
-export type TestContext = Readonly<{
+export type TestResult = Readonly<{
   event: CloudFrontRequestEvent;
-  result: CloudFrontRequest;
+  modifiedRequest: CloudFrontRequest;
   context: Context;
   parsedCookies?: Array<Record<string, string> | undefined>;
 }>;
 
-export const createTestContext = async ({
+export const runTest = async ({
   eventOverrides,
   contextOverrides,
-}: CreateTestContextOptions = {}): Promise<TestContext> => {
+}: CreateTestContextOptions = {}): Promise<TestResult> => {
   const context: Context = merge(
     {
       functionName: 'assignEnvironment',
@@ -65,25 +65,30 @@ export const createTestContext = async ({
     eventOverrides,
   );
 
-  const result = (await bluebird.fromCallback(cb => {
+  const modifiedRequest = (await bluebird.fromCallback(cb => {
     assignEnvironment(event, context, cb);
   })) as CloudFrontRequest;
 
-  const parsedCookies = result.headers.cookie
-    ? result.headers.cookie.map(({ value }) => {
+  const parsedCookies = modifiedRequest.headers.cookie
+    ? modifiedRequest.headers.cookie.map(({ value }) => {
         return value ? cookie.parse(value) : undefined;
       })
     : undefined;
 
-  return { context, result, event, parsedCookies };
+  return { context, modifiedRequest, event, parsedCookies };
 };
+
+export const testManyTimes = async (
+  numTests = 1000,
+  options?: CreateTestContextOptions,
+) => bluebird.map(times(numTests), async () => runTest(options));
 
 export const testBot = async (
   userAgent = 'Googlebot/2.1 (+http://www.googlebot.com/bot.html)',
-  numTests = 5000,
+  numTests = 1000,
 ) => {
-  const results = await bluebird.map(times(numTests), async () => {
-    const context = await createTestContext({
+  const results = await bluebird.map(
+    testManyTimes(numTests, {
       eventOverrides: {
         Records: [
           {
@@ -102,14 +107,10 @@ export const testBot = async (
           },
         ],
       },
-    });
+    }),
+    ({ parsedCookies }) => parsedCookies![0]!.env,
+  );
 
-    const parsedCookie = cookie.parse(context.result.headers.cookie[0].value);
-
-    return parsedCookie.env;
-  });
-
-  expect(results).toHaveLength(numTests);
   expect(results).not.toContain('beta');
   expect(uniq(results)).toEqual(['master']);
 };

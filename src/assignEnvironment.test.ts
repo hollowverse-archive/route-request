@@ -1,17 +1,26 @@
 // tslint:disable:no-non-null-assertion no-implicit-dependencies
-import { TestContext, createTestContext, testBot } from './testHelpers';
+import { TestResult, runTest, testBot, testManyTimes } from './testHelpers';
 import { oneLine } from 'common-tags';
+import { countBy, mapValues } from 'lodash';
 
 describe('assignEnvironment', () => {
-  let context: TestContext;
+  it('picks a random environment based on defined weights', async () => {
+    const numTests = 1000;
+    const results = await testManyTimes(numTests);
+    const cookies = mapValues(
+      countBy(results.map(result => result.parsedCookies![0]!.env)),
+      v => v / numTests,
+    );
 
-  beforeEach(async () => {
-    context = await createTestContext();
+    expect(cookies.beta).toBeCloseTo(0.25, 1);
+    expect(cookies.master).toBeCloseTo(0.75, 1);
   });
+
+  let testResult: TestResult;
 
   describe('for requests with an existing `env` cookie', () => {
     beforeEach(async () => {
-      context = await createTestContext({
+      testResult = await runTest({
         eventOverrides: {
           Records: [
             {
@@ -34,26 +43,30 @@ describe('assignEnvironment', () => {
     });
 
     it('does not overwrite `env` cookie if it already exists', async () => {
-      expect(context.parsedCookies![0]!).toHaveProperty('env');
-      expect(context.parsedCookies![0]!.env).toBe('whatever');
+      expect(testResult.parsedCookies![0]!).toHaveProperty('env');
+      expect(testResult.parsedCookies![0]!.env).toBe('whatever');
     });
+  });
+
+  beforeEach(async () => {
+    testResult = await runTest();
   });
 
   describe('for requests without a Cookie header,', () => {
     it('adds a Cookie header', () => {
-      expect(context.result.headers.cookie).toBeInstanceOf(Array);
-      expect(context.result.headers.cookie).toHaveLength(1);
+      expect(testResult.modifiedRequest.headers.cookie).toBeInstanceOf(Array);
+      expect(testResult.modifiedRequest.headers.cookie).toHaveLength(1);
     });
 
     it('Cookie header includes `env` cookie', () => {
-      expect(context.parsedCookies![0]!).toHaveProperty('env');
-      expect(context.parsedCookies![0]!.env).toMatch(/beta|master/);
+      expect(testResult.parsedCookies![0]!).toHaveProperty('env');
+      expect(testResult.parsedCookies![0]!.env).toMatch(/beta|master/);
     });
   });
 
   describe('for requests with an existing Cookie header, but without an `env` cookie,', () => {
     beforeEach(async () => {
-      context = await createTestContext({
+      testResult = await runTest({
         eventOverrides: {
           Records: [
             {
@@ -71,16 +84,16 @@ describe('assignEnvironment', () => {
     });
 
     it('adds the `env` cookie to an existing header', async () => {
-      expect(context.parsedCookies![0]!).toHaveProperty('env');
-      expect(context.parsedCookies![0]!.env).toMatch(/beta|master/);
+      expect(testResult.parsedCookies![0]!).toHaveProperty('env');
+      expect(testResult.parsedCookies![0]!.env).toMatch(/beta|master/);
     });
 
     it('does not remove other cookies', async () => {
-      expect(context.parsedCookies![0]!).toHaveProperty('foo');
-      expect(context.parsedCookies![0]!.foo).toBe('bar');
+      expect(testResult.parsedCookies![0]!).toHaveProperty('foo');
+      expect(testResult.parsedCookies![0]!.foo).toBe('bar');
 
-      expect(context.parsedCookies![0]!).toHaveProperty('abc');
-      expect(context.parsedCookies![0]!.abc).toBe('xyz');
+      expect(testResult.parsedCookies![0]!).toHaveProperty('abc');
+      expect(testResult.parsedCookies![0]!.abc).toBe('xyz');
     });
   });
 
