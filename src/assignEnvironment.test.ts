@@ -1,13 +1,27 @@
 // tslint:disable:no-non-null-assertion no-implicit-dependencies
-import { TestContext, createTestContext, testBot } from './testHelpers';
+import {
+  TestContext,
+  createTestContext,
+  testBot,
+  testManyTimes,
+} from './testHelpers';
 import { oneLine } from 'common-tags';
+import { countBy, mapValues } from 'lodash';
 
 describe('assignEnvironment', () => {
-  let context: TestContext;
+  it('picks a random environment based on defined weights', async () => {
+    const numTests = 1000;
+    const results = await testManyTimes(numTests);
+    const cookies = mapValues(
+      countBy(results.map(result => result.parsedCookies![0]!.env)),
+      v => v / numTests,
+    );
 
-  beforeEach(async () => {
-    context = await createTestContext();
+    expect(cookies.beta).toBeCloseTo(0.25, 1);
+    expect(cookies.master).toBeCloseTo(0.75, 1);
   });
+
+  let context: TestContext;
 
   describe('for requests with an existing `env` cookie', () => {
     beforeEach(async () => {
@@ -37,6 +51,10 @@ describe('assignEnvironment', () => {
       expect(context.parsedCookies![0]!).toHaveProperty('env');
       expect(context.parsedCookies![0]!.env).toBe('whatever');
     });
+  });
+
+  beforeEach(async () => {
+    context = await createTestContext();
   });
 
   describe('for requests without a Cookie header,', () => {

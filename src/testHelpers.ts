@@ -1,4 +1,4 @@
-// tslint:disable no-implicit-dependencies
+// tslint:disable no-implicit-dependencies no-non-null-assertion
 
 import bluebird from 'bluebird';
 import cookie from 'cookie';
@@ -78,12 +78,17 @@ export const createTestContext = async ({
   return { context, result, event, parsedCookies };
 };
 
+export const testManyTimes = async (
+  numTests = 1000,
+  options?: CreateTestContextOptions,
+) => bluebird.map(times(numTests), async () => createTestContext(options));
+
 export const testBot = async (
   userAgent = 'Googlebot/2.1 (+http://www.googlebot.com/bot.html)',
-  numTests = 5000,
+  numTests = 1000,
 ) => {
-  const results = await bluebird.map(times(numTests), async () => {
-    const context = await createTestContext({
+  const results = await bluebird.map(
+    testManyTimes(numTests, {
       eventOverrides: {
         Records: [
           {
@@ -102,14 +107,10 @@ export const testBot = async (
           },
         ],
       },
-    });
+    }),
+    ({ parsedCookies }) => parsedCookies![0]!.env,
+  );
 
-    const parsedCookie = cookie.parse(context.result.headers.cookie[0].value);
-
-    return parsedCookie.env;
-  });
-
-  expect(results).toHaveLength(numTests);
   expect(results).not.toContain('beta');
   expect(uniq(results)).toEqual(['master']);
 };
