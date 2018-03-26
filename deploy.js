@@ -5,8 +5,8 @@
 const shelljs = require('shelljs');
 const {
   executeCommands,
-} = require('@hollowverse/common/helpers/executeCommands');
-const { createZipFile } = require('@hollowverse/common/helpers/createZipFile');
+} = require('@hollowverse/utils/helpers/executeCommands');
+const { createZipFile } = require('@hollowverse/utils/helpers/createZipFile');
 const fs = require('fs');
 const awsSdk = require('aws-sdk');
 const { findIndex } = require('lodash');
