@@ -1,5 +1,5 @@
 {
-  "extends": "./node_modules/@hollowverse/common/tsconfig.json",
+  "extends": "./node_modules/@hollowverse/config/tsconfig.json",
   "exclude": ["./dist", ".webpack", "node_modules"],
   "compilerOptions": {
     "checkJs": false
