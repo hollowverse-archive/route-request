@@ -4,7 +4,7 @@ const webpack = require('webpack');
 const path = require('path');
 const BabelMinifyPlugin = require('babel-minify-webpack-plugin');
 const { mapValues } = require('lodash');
-const { ifProd } = require('./env');
+const { ifProd } = require('@hollowverse/utils/helpers/env');
 
 module.exports = {
   entry: {
