@@ -634,9 +634,9 @@
   version "4.0.0"
   resolved "https://registry.yarnpkg.com/@hollowverse/config/-/config-4.0.0.tgz#3a417539bb0ebecbba31a9a830e6768204a7de98"
 
-"@hollowverse/utils@^4.0.2":
-  version "4.0.2"
-  resolved "https://registry.yarnpkg.com/@hollowverse/utils/-/utils-4.0.2.tgz#c34f8220f1ea37538566828a7fcada667969f254"
+"@hollowverse/utils@^4.1.1":
+  version "4.1.1"
+  resolved "https://registry.yarnpkg.com/@hollowverse/utils/-/utils-4.1.1.tgz#ac5a72775713c6d4a1881d26a754056c33478a4e"
   dependencies:
     "@babel/runtime" "^7.0.0-beta.40"
     bluebird "^3.5.1"
@@ -7102,9 +7102,9 @@ typescript-eslint-parser@^14.0.0:
     lodash.unescape "4.0.1"
     semver "5.5.0"
 
-typescript@^2.7.2:
-  version "2.7.2"
-  resolved "https://registry.yarnpkg.com/typescript/-/typescript-2.7.2.tgz#2d615a1ef4aee4f574425cdff7026edf81919836"
+typescript@^2.8.1:
+  version "2.8.1"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-2.8.1.tgz#6160e4f8f195d5ba81d4876f9c0cc1fbc0820624"
 
 ua-parser-js@^0.7.9:
   version "0.7.17"
