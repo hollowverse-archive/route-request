@@ -257,7 +257,7 @@
     "@babel/helper-remap-async-to-generator" "7.0.0-beta.44"
     "@babel/plugin-syntax-async-generators" "7.0.0-beta.44"
 
-"@babel/plugin-proposal-object-rest-spread@7.0.0-beta.44":
+"@babel/plugin-proposal-object-rest-spread@7.0.0-beta.44", "@babel/plugin-proposal-object-rest-spread@^7.0.0-beta.44":
   version "7.0.0-beta.44"
   resolved "https://registry.yarnpkg.com/@babel/plugin-proposal-object-rest-spread/-/plugin-proposal-object-rest-spread-7.0.0-beta.44.tgz#b7817770cb9cf72f2e73ca6fcb83d61a87305259"
   dependencies:
@@ -631,9 +631,9 @@
     lodash "^4.2.0"
     to-fast-properties "^2.0.0"
 
-"@hollowverse/config@^5.0.0":
-  version "5.0.0"
-  resolved "https://registry.yarnpkg.com/@hollowverse/config/-/config-5.0.0.tgz#255359021d51c244096eeb9ea05de9c28af47010"
+"@hollowverse/config@^5.0.1":
+  version "5.0.1"
+  resolved "https://registry.yarnpkg.com/@hollowverse/config/-/config-5.0.1.tgz#d4f4c4779f15e55244dc36baec3b85d74f361b0d"
 
 "@hollowverse/utils@^5.0.0":
   version "5.0.0"
