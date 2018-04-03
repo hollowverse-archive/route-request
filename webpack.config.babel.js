@@ -2,7 +2,7 @@
 
 const webpack = require('webpack');
 const path = require('path');
-const BabelMinifyPlugin = require('babel-minify-webpack-plugin');
+const UglifyJSPlugin = require('uglifyjs-webpack-plugin');
 const { mapValues } = require('lodash');
 const { ifProd } = require('@hollowverse/utils/helpers/env');
 
@@ -51,9 +51,9 @@ module.exports = {
       ),
     ),
     ...ifProd([
-      new BabelMinifyPlugin({
-        mangle: false, // Buggy
-        removeUndefined: false, // Buggy
+      new UglifyJSPlugin({
+        parallel: true,
+        sourceMap: true,
       }),
     ]),
   ],
