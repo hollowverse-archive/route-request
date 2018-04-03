@@ -1,17 +1,17 @@
-import { Context, CloudFrontRequestEvent } from 'aws-lambda'; // tslint:disable-line:no-implicit-dependencies
+import { Handler, CloudFrontRequestEvent } from 'aws-lambda'; // tslint:disable-line:no-implicit-dependencies
 import cookie from 'cookie';
 import weighted from 'weighted';
 import isBot from 'is-bot';
+import { createLambdaHandler } from '@hollowverse/utils/helpers/createLambdaHandler';
 
 const environments = {
   master: 0.75,
   beta: 0.25,
 };
 
-export const assignEnvironment = async (
-  event: CloudFrontRequestEvent,
-  _context: Context,
-) => {
+export const assignEnvironment: Handler<
+  CloudFrontRequestEvent
+> = createLambdaHandler(async event => {
   const request = event.Records[0].cf.request;
   const headers = request.headers;
   const cookieHeaders = headers.cookie;
@@ -55,4 +55,4 @@ export const assignEnvironment = async (
   }
 
   return request;
-};
+});
