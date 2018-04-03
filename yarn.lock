@@ -635,9 +635,9 @@
   version "5.0.1"
   resolved "https://registry.yarnpkg.com/@hollowverse/config/-/config-5.0.1.tgz#d4f4c4779f15e55244dc36baec3b85d74f361b0d"
 
-"@hollowverse/utils@^5.0.0":
-  version "5.0.0"
-  resolved "https://registry.yarnpkg.com/@hollowverse/utils/-/utils-5.0.0.tgz#4fb131d19240e362c1204b5300838c1a2ada34cd"
+"@hollowverse/utils@^5.0.1":
+  version "5.0.1"
+  resolved "https://registry.yarnpkg.com/@hollowverse/utils/-/utils-5.0.1.tgz#308b032cffcb3df3792b9f3ec112e77584481dfe"
   dependencies:
     "@babel/runtime" "^7.0.0-beta.44"
     "@types/aws-lambda" "^0.0.34"
