@@ -65,9 +65,7 @@ export const runTest = async ({
     eventOverrides,
   );
 
-  const modifiedRequest = (await bluebird.fromCallback(cb => {
-    assignEnvironment(event, context, cb);
-  })) as CloudFrontRequest;
+  const modifiedRequest = await assignEnvironment(event, context);
 
   const parsedCookies = modifiedRequest.headers.cookie
     ? modifiedRequest.headers.cookie.map(({ value }) => {
