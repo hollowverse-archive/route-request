@@ -634,11 +634,12 @@
   version "4.0.0"
   resolved "https://registry.yarnpkg.com/@hollowverse/config/-/config-4.0.0.tgz#3a417539bb0ebecbba31a9a830e6768204a7de98"
 
-"@hollowverse/utils@^4.1.1":
-  version "4.1.1"
-  resolved "https://registry.yarnpkg.com/@hollowverse/utils/-/utils-4.1.1.tgz#ac5a72775713c6d4a1881d26a754056c33478a4e"
+"@hollowverse/utils@^4.1.5":
+  version "4.1.5"
+  resolved "https://registry.yarnpkg.com/@hollowverse/utils/-/utils-4.1.5.tgz#4c9461e184d71f59702df50f33cb95a0cffed2b5"
   dependencies:
     "@babel/runtime" "^7.0.0-beta.40"
+    "@types/aws-lambda" "^0.0.34"
     bluebird "^3.5.1"
     glob "^7.1.2"
     jszip "^3.1.4"
@@ -659,6 +660,10 @@
 "@types/aws-lambda@^0.0.32":
   version "0.0.32"
   resolved "https://registry.yarnpkg.com/@types/aws-lambda/-/aws-lambda-0.0.32.tgz#34778e62957fe46a0da0cb5f470cafe8999a8fb9"
+
+"@types/aws-lambda@^0.0.34":
+  version "0.0.34"
+  resolved "https://registry.yarnpkg.com/@types/aws-lambda/-/aws-lambda-0.0.34.tgz#dd6abb59a52dd2b674e9dd8e37de3485ea9cba7d"
 
 "@types/bluebird@^3.5.20":
   version "3.5.20"
