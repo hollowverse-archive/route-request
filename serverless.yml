@@ -1,0 +1,85 @@
+service: release-manager
+
+plugins:
+  - serverless-webpack
+  # - serverless-plugin-cloudfront-lambda-edge
+
+custom:
+  webpack:
+    webpackConfig: webpack.config.ts
+    packager: yarn
+    includeModules: true # Enable auto-packing of external modules
+
+provider:
+  name: aws
+  runtime: nodejs6.10
+  stage: ${opt:stage, 'development'}
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - elasticbeanstalk:Describe*
+      Resource: "*"
+    - Effect: Allow
+      Action:
+        - logs:CreateLogGroup
+        - logs:CreateLogStream
+        - logs:PutLogEvents
+      Resource: "*"
+
+functions:
+  assignEnvironment:
+    memorySize: 128
+    timeout: 5
+    handler: src/assignEnvironment.assignEnvironment
+    lambdaAtEdge:
+      distribution: WebsiteDistribution
+      eventType: 'viewer-request'
+  routeOriginRequest:
+    memorySize: 128
+    timeout: 5
+    handler: src/routeOriginRequest.routeOriginRequest
+    lambdaAtEdge:
+      distribution: WebsiteDistribution
+      eventType: 'origin-request'
+  setSetCookieOnOriginResponse:
+    memorySize: 128
+    timeout: 5
+    handler: src/setSetCookieOnOriginResponse.setSetCookieOnOriginResponse
+    lambdaAtEdge:
+      distribution: WebsiteDistribution
+      eventType: 'origin-response'
+
+# resources:
+#    Resources:
+#       WebsiteDistribution:
+#          Type: 'AWS::CloudFront::Distribution'
+#          Properties:
+#             DistributionConfig:
+#                DefaultCacheBehavior:
+#                   TargetOriginId: 'WebsiteOrigin'
+#                   ViewerProtocolPolicy: 'redirect-to-https'
+#                   DefaultTTL: 600 # ten minutes
+#                   MaxTTL: 600 # ten minutes
+#                   Compress: true
+#                   ForwardedValues:
+#                      QueryString: false
+#                      Cookies:
+#                         Forward: 'none'
+#                DefaultRootObject: 'index.html'
+#                Enabled: true
+#                PriceClass: 'PriceClass_100'
+#                HttpVersion: 'http2'
+#                ViewerCertificate:
+#                   CloudFrontDefaultCertificate: true
+#                Origins:
+#                   -
+#                      Id: 'WebsiteBucketOrigin'
+#                      DomainName: { 'Fn::GetAtt': [ 'WebsiteBucket', 'DomainName' ] }
+#                      S3OriginConfig: {}
+
+package:
+  include:
+    - src/**
+  exclude:
+    - .webpack
+

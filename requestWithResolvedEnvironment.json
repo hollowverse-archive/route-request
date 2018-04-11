@@ -1,0 +1,38 @@
+{
+  "Records": [
+    {
+      "cf": {
+        "response": {
+          "status": "200",
+          "statusDescription": "OK",
+          "headers": {
+            "last-modified": [
+              {
+                "value": "2016-11-25",
+                "key": "Last-Modified"
+              }
+            ],
+            "vary": [
+              {
+                "value": "*",
+                "key": "Vary"
+              }
+            ],
+            "x-amz-meta-last-modified": [
+              {
+                "value": "2016-01-01",
+                "key": "X-Amz-Meta-Last-Modified"
+              }
+            ],
+            "x-hollowverse-resolved-environment": [
+              {
+                "key": "x-hollowverse-resolved-environment",
+                "value": "beta"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
