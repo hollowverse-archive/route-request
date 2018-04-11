@@ -1,6 +1,3 @@
 {
-  "extends": "@hollowverse/config/lambda/.babelrc",
-  "plugins": [
-    "lodash"
-  ]
+  "extends": "@hollowverse/config/babel/node8/.babelrc"
 }
