@@ -1,3 +1,14 @@
 {
-  "extends": "@hollowverse/config/babel/node8/.babelrc"
+  "extends": "@hollowverse/config/babel/node8/.babelrc",
+  "presets": [
+    [
+      "@babel/env",
+      {
+        "targets": {
+          "node": "6.10"
+        },
+        "useBuiltIns": "usage"
+      }
+    ]
+  ]
 }
