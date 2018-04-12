@@ -1,6 +1,20 @@
-#! /usr/bin/env node
 /* eslint-disable no-console */
 /* eslint import/no-extraneous-dependencies: ["error", {"devDependencies": true}] */
+require('@babel/register')({
+  only: [/@hollowverse/],
+  babelrc: false,
+  presets: [
+    [
+      '@babel/env',
+      {
+        targets: {
+          node: '6.10',
+        },
+        useBuiltIns: 'usage',
+      },
+    ],
+  ],
+});
 
 const shelljs = require('shelljs');
 const {
