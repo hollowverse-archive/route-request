@@ -1,39 +1,19 @@
-import { Handler, CloudFrontRequestEvent } from 'aws-lambda'; // tslint:disable-line:no-implicit-dependencies
-import bluebird from 'bluebird';
-import compact from 'lodash/compact';
-import first from 'lodash/first';
+import { CloudFrontRequestEvent } from 'aws-lambda'; // tslint:disable-line:no-implicit-dependencies
 import { createLambdaHandler } from '@hollowverse/utils/helpers/createLambdaHandler';
-import awsSdk from 'aws-sdk';
+import bluebird from 'bluebird';
+import find from 'lodash/find';
 import get from 'lodash/get';
+import { findEnvByName as findEbEnvByName } from './eb/findEnvByName';
 
-const eb = new awsSdk.ElasticBeanstalk({ region: 'us-east-1' });
-
-export const prefix = (str: string) => `hollowverse-${str}`;
-
-export const unprefix = (str: string) => str.replace(/^hollowverse-/, '');
-
-const findEnvByName = async (branch: string) => {
-  const { Environments } = await eb
-    .describeEnvironments({
-      ApplicationName: 'Hollowverse',
-      IncludeDeleted: false,
-      EnvironmentNames: [prefix(branch)],
-    })
-    .promise();
-
-  if (Environments && Environments.length > 0) {
-    const [env] = Environments;
-
-    // tslint:disable-next-line:no-non-null-assertion
-    return env.CNAME;
-  }
-
-  return undefined;
+type CreateRouteOriginRequestOptions = {
+  findEnvByName(branch: string): Promise<string | undefined>;
 };
 
-export const routeOriginRequest: Handler<
-  CloudFrontRequestEvent
-> = createLambdaHandler(async event => {
+export const createRouteOriginRequest = ({
+  findEnvByName,
+}: CreateRouteOriginRequestOptions) => async (
+  event: CloudFrontRequestEvent,
+) => {
   const request = event.Records[0].cf.request;
 
   const branch: string | undefined = get(request.headers, [
@@ -48,21 +28,18 @@ export const routeOriginRequest: Handler<
     'value',
   ]);
 
-  const resolvedEnvironment = first(
-    compact(
-      await bluebird.map(
-        [branch, env],
-        async (envName, i) =>
-          envName
-            ? {
-                envName,
-                envUrl: await findEnvByName(envName),
-                isInternal: i === 0,
-              }
-            : undefined,
-      ),
-    ),
+  const possibleEnvironments = await bluebird.map(
+    [branch, env],
+    async (envName, i) =>
+      envName
+        ? {
+            envName,
+            envUrl: await findEnvByName(envName),
+            isInternal: i === 0,
+          }
+        : undefined,
   );
+  const resolvedEnvironment = find(possibleEnvironments, v => v !== undefined);
 
   if (!resolvedEnvironment) {
     throw new TypeError(
@@ -98,4 +75,10 @@ export const routeOriginRequest: Handler<
   request.headers.host = [{ key: 'host', value: envUrl }];
 
   return request;
-});
+};
+
+export const routeOriginRequest = createLambdaHandler(
+  createRouteOriginRequest({
+    findEnvByName: findEbEnvByName,
+  }),
+);

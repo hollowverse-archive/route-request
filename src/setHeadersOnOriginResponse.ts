@@ -1,7 +1,7 @@
-import { Handler, CloudFrontResponseEvent } from 'aws-lambda'; // tslint:disable-line:no-implicit-dependencies
+import { CloudFrontResponseEvent } from 'aws-lambda'; // tslint:disable-line:no-implicit-dependencies
+import { createLambdaHandler } from '@hollowverse/utils/helpers/createLambdaHandler';
 import cookie from 'cookie';
 import get from 'lodash/get';
-import { createLambdaHandler } from '@hollowverse/utils/helpers/createLambdaHandler';
 
 const envCookieOptions: cookie.CookieSerializeOptions = {
   maxAge: 24 * 60 * 60 * 1000,
@@ -26,9 +26,7 @@ const expireCookie = (cookieName: string) =>
     secure: true,
   });
 
-export const setSetCookieOnOriginResponse: Handler<
-  CloudFrontResponseEvent
-> = createLambdaHandler(async event => {
+export const handler = async (event: CloudFrontResponseEvent) => {
   const { request, response } = event.Records[0].cf;
 
   if (
@@ -81,4 +79,6 @@ export const setSetCookieOnOriginResponse: Handler<
   ];
 
   return response;
-});
+};
+
+export const setHeadersOnOriginResponse = createLambdaHandler(handler);

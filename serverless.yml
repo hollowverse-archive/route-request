@@ -27,10 +27,10 @@ provider:
       Resource: "*"
 
 functions:
-  assignEnvironment:
+  assignEnvironmentToViewerRequest:
     memorySize: 128
     timeout: 5
-    handler: src/assignEnvironment.assignEnvironment
+    handler: src/assignEnvironmentToViewerRequest.assignEnvironmentToViewerRequest
     lambdaAtEdge:
       distribution: WebsiteDistribution
       eventType: 'viewer-request'
@@ -41,10 +41,10 @@ functions:
     lambdaAtEdge:
       distribution: WebsiteDistribution
       eventType: 'origin-request'
-  setSetCookieOnOriginResponse:
+  setHeadersOnOriginResponse:
     memorySize: 128
     timeout: 5
-    handler: src/setSetCookieOnOriginResponse.setSetCookieOnOriginResponse
+    handler: src/setHeadersOnOriginResponse.setHeadersOnOriginResponse
     lambdaAtEdge:
       distribution: WebsiteDistribution
       eventType: 'origin-response'

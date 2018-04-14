@@ -2,31 +2,96 @@
 
 import bluebird from 'bluebird';
 import cookie from 'cookie';
-import { assignEnvironment } from './assignEnvironment';
-import { Context, CloudFrontRequestEvent, CloudFrontRequest } from 'aws-lambda';
+import {
+  Context,
+  CloudFrontResponseEvent,
+  CloudFrontRequest,
+  CloudFrontRequestEvent,
+  CloudFrontHeaders,
+} from 'aws-lambda';
 import { merge, times, uniq } from 'lodash';
+import {
+  createAssignEnvironmentToViewerRequest as assignEnvironmentToViewerRequest,
+  createAssignEnvironmentToViewerRequest,
+} from './assignEnvironmentToViewerRequest';
+import {
+  createRouteOriginRequest as routeOriginRequest,
+  createRouteOriginRequest,
+} from './routeOriginRequest';
+import { handler as setHeadersOnOriginResponse } from './setHeadersOnOriginResponse';
+
+const requestToEvent = (
+  request: CloudFrontRequest,
+): CloudFrontRequestEvent => ({
+  Records: [
+    {
+      cf: {
+        config: {
+          distributionId: '',
+          requestId: '534c650d-3d7b-4d4e-afce-f71d81b4f25c',
+        },
+        request,
+      },
+    },
+  ],
+});
+
+const requestToResponseEvent = (
+  response = {
+    headers: {},
+    status: '200',
+    statusDescription: 'OK',
+  },
+) => (request: CloudFrontRequest): CloudFrontResponseEvent => ({
+  Records: [
+    {
+      cf: {
+        config: {
+          distributionId: 'E7N74P8D0SWLS',
+          requestId: '534c650d-3d7b-4d4e-afce-f71d81b4f25c',
+        },
+        request,
+        response,
+      },
+    },
+  ],
+});
+
+export const parseAllCookies = (
+  headers: CloudFrontHeaders[keyof CloudFrontHeaders],
+) =>
+  (headers || [])
+    .map(header => cookie.parse(header.value))
+    .reduce((acc, cookiesInHeader) => ({ ...acc, ...cookiesInHeader }), {});
 
 type DeepPartial<T> = { [P in keyof T]?: DeepPartial<T[P]> };
 
 export type CreateTestContextOptions = {
   eventOverrides?: DeepPartial<CloudFrontRequestEvent>;
   contextOverrides?: DeepPartial<Context>;
+  publicEnvironments?: Record<string, number>;
+  findEnvByName?: typeof mockFindEnvByName;
 };
 
-export type TestResult = Readonly<{
-  event: CloudFrontRequestEvent;
-  modifiedRequest: CloudFrontRequest;
-  context: Context;
-  parsedCookies?: Array<Record<string, string> | undefined>;
-}>;
+type UnPromisify<T> = T extends Promise<infer R> ? R : T;
+
+export type TestResult = Readonly<UnPromisify<ReturnType<typeof runTest>>>;
 
 export const runTest = async ({
   eventOverrides,
   contextOverrides,
-}: CreateTestContextOptions = {}): Promise<TestResult> => {
+  publicEnvironments = { beta: 0.25, master: 0.75 },
+  findEnvByName = async (branch: string) => {
+    if (branch in publicEnvironments) {
+      return `https://${branch}.example.com`;
+    }
+
+    return undefined;
+  },
+}: CreateTestContextOptions = {}) => {
   const context: Context = merge(
     {
-      functionName: 'assignEnvironment',
+      functionName: 'assignEnvironmentToViewerRequest',
       memoryLimitInMB: 128,
       callbackWaitsForEmptyEventLoop: false,
       invokedFunctionArn: 'any',
@@ -65,30 +130,32 @@ export const runTest = async ({
     eventOverrides,
   );
 
-  const modifiedRequest = (await bluebird.fromCallback(cb => {
-    assignEnvironment(event, context, cb);
-  })) as CloudFrontRequest;
+  const endToEndResponse = await createAssignEnvironmentToViewerRequest({
+    publicEnvironments,
+  })(event)
+    .then(requestToEvent)
+    .then(createRouteOriginRequest({ findEnvByName }))
+    .then(requestToResponseEvent())
+    .then(setHeadersOnOriginResponse);
 
-  const parsedCookies = modifiedRequest.headers.cookie
-    ? modifiedRequest.headers.cookie.map(({ value }) => {
-        return value ? cookie.parse(value) : undefined;
-      })
-    : undefined;
+  const parsedResponseCookies = parseAllCookies(
+    endToEndResponse.headers['set-cookie'],
+  );
 
-  return { context, modifiedRequest, event, parsedCookies };
+  return { context, endToEndResponse, event, parsedResponseCookies };
 };
 
-export const testManyTimes = async (
-  numTests = 1000,
+export const runTestManyTimes = async (
+  numTests = 300,
   options?: CreateTestContextOptions,
 ) => bluebird.map(times(numTests), async () => runTest(options));
 
 export const testBot = async (
   userAgent = 'Googlebot/2.1 (+http://www.googlebot.com/bot.html)',
-  numTests = 1000,
+  numTests = 300,
 ) => {
   const results = await bluebird.map(
-    testManyTimes(numTests, {
+    runTestManyTimes(numTests, {
       eventOverrides: {
         Records: [
           {
@@ -108,7 +175,7 @@ export const testBot = async (
         ],
       },
     }),
-    ({ parsedCookies }) => parsedCookies![0]!.env,
+    ({ parsedResponseCookies }) => parsedResponseCookies.env,
   );
 
   expect(results).not.toContain('beta');
