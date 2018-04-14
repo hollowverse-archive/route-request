@@ -6213,6 +6213,13 @@ p-map@^1.1.1:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/p-map/-/p-map-1.2.0.tgz#e4e94f311eabbc8633a1e79908165fca26241b6b"
 
+p-memoize@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/p-memoize/-/p-memoize-1.0.0.tgz#5760138734a553d1b103e4c176cf8866faa5f26e"
+  dependencies:
+    mem "^1.1.0"
+    mimic-fn "^1.0.0"
+
 p-try@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/p-try/-/p-try-1.0.0.tgz#cbc79cdbaf8fd4228e13f621f2b1a237c1b207b3"
