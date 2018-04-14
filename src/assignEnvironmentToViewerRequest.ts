@@ -6,11 +6,11 @@ import isBot from 'is-bot';
 import qs from 'querystring';
 
 type CreateAssignEnvironmentToViewerRequestOptions = {
-  publicEnvironments: Record<string, number>;
+  publicBranches: Record<string, number>;
 };
 
 export const createAssignEnvironmentToViewerRequest = ({
-  publicEnvironments,
+  publicBranches,
 }: CreateAssignEnvironmentToViewerRequestOptions) => async (
   event: CloudFrontRequestEvent,
 ) => {
@@ -48,7 +48,7 @@ export const createAssignEnvironmentToViewerRequest = ({
     ];
   }
 
-  if (!env || !(env in publicEnvironments)) {
+  if (!env || !(env in publicBranches)) {
     const userAgent =
       request.headers['user-agent'] &&
       request.headers['user-agent'][0] &&
@@ -57,7 +57,7 @@ export const createAssignEnvironmentToViewerRequest = ({
     if (isBot(userAgent) || /webpagetest/i.test(userAgent)) {
       env = 'master';
     } else {
-      env = weighted.select<string>(publicEnvironments);
+      env = weighted.select<string>(publicBranches);
     }
   }
 
@@ -73,7 +73,7 @@ export const createAssignEnvironmentToViewerRequest = ({
 
 export const assignEnvironmentToViewerRequest = createLambdaHandler(
   createAssignEnvironmentToViewerRequest({
-    publicEnvironments: {
+    publicBranches: {
       master: 0.75,
       beta: 0.25,
     },

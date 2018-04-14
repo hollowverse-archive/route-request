@@ -5,10 +5,10 @@ import { countBy, mapValues } from 'lodash';
 
 describe('End to end, public environments', () => {
   it('picks a random environment based on defined weights', async () => {
-    const numTests = 300;
+    const numTests = 1000;
     const results = await runTestManyTimes(numTests);
     const cookies = mapValues(
-      countBy(results.map(result => result.parsedResponseCookies.env)),
+      countBy(results.map(result => result.responseCookies.env)),
       v => v / numTests,
     );
 
@@ -21,7 +21,7 @@ describe('End to end, public environments', () => {
   describe('for requests with an existing `env` cookie', () => {
     it('does not overwrite `env` cookie if it is a valid environment', async () => {
       const results = await runTestManyTimes(300, {
-        publicEnvironments: {
+        publicBranches: {
           whatever: 0.7,
           master: 0.2,
           beta: 0.1,
@@ -46,7 +46,7 @@ describe('End to end, public environments', () => {
         },
       });
 
-      results.forEach(({ parsedResponseCookies: { env } }) => {
+      results.forEach(({ responseCookies: { env } }) => {
         expect(env).toBeDefined();
         expect(env).toBe('whatever');
       });
@@ -54,7 +54,7 @@ describe('End to end, public environments', () => {
 
     it('overwrites `env` cookie if if it is not a valid environment', async () => {
       const results = await runTestManyTimes(300, {
-        publicEnvironments: {
+        publicBranches: {
           master: 1,
           beta: 1,
         },
@@ -78,27 +78,31 @@ describe('End to end, public environments', () => {
         },
       });
 
-      results.forEach(({ parsedResponseCookies: { env } }) => {
+      results.forEach(({ responseCookies: { env } }) => {
         expect(env).toMatch(/beta|master/);
         expect(env).not.toBe('nonexistent');
       });
     });
   });
 
-  beforeEach(async () => {
-    testResult = await runTest();
-  });
-
   describe('for requests without a Cookie header,', () => {
-    it('adds a Set-Cookie header to the response', () => {
-      expect(testResult.endToEndResponse.headers['set-cookie']).toBeInstanceOf(
-        Array,
+    beforeEach(async () => {
+      testResult = await runTest();
+    });
+
+    it('request is routed to the same environment set in cookie', () => {
+      expect(testResult.actualEnvironmentHost).toMatch(
+        testResult.responseCookies.env,
       );
     });
 
+    it('adds a Set-Cookie header to the response', () => {
+      expect(testResult.response.headers['set-cookie']).toBeInstanceOf(Array);
+    });
+
     it('Set-Cookie header includes `env` cookie', () => {
-      expect(testResult.parsedResponseCookies).toHaveProperty('env');
-      expect(testResult.parsedResponseCookies.env).toMatch(/beta|master/);
+      expect(testResult.responseCookies).toHaveProperty('env');
+      expect(testResult.responseCookies.env).toMatch(/beta|master/);
     });
   });
 
@@ -121,15 +125,21 @@ describe('End to end, public environments', () => {
       });
     });
 
+    it('request is routed to the same environment set in cookie', () => {
+      expect(testResult.actualEnvironmentHost).toMatch(
+        testResult.responseCookies.env,
+      );
+    });
+
     it('adds the `env` cookie to the response', async () => {
-      expect(testResult.parsedResponseCookies).toHaveProperty('env');
-      expect(testResult.parsedResponseCookies.env).toMatch(/beta|master/);
+      expect(testResult.responseCookies).toHaveProperty('env');
+      expect(testResult.responseCookies.env).toMatch(/beta|master/);
     });
 
     it('does not expire or otherwise modify unrelated cookies', async () => {
-      expect(testResult.parsedResponseCookies).not.toHaveProperty('foo');
+      expect(testResult.responseCookies).not.toHaveProperty('foo');
 
-      expect(testResult.parsedResponseCookies).not.toHaveProperty('abc');
+      expect(testResult.responseCookies).not.toHaveProperty('abc');
     });
   });
 

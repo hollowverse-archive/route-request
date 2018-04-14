@@ -34,10 +34,10 @@ functions:
     lambdaAtEdge:
       distribution: WebsiteDistribution
       eventType: 'viewer-request'
-  routeOriginRequest:
+  routeRequestToOrigin:
     memorySize: 128
     timeout: 5
-    handler: src/routeOriginRequest.routeOriginRequest
+    handler: src/routeRequestToOrigin.routeRequestToOrigin
     lambdaAtEdge:
       distribution: WebsiteDistribution
       eventType: 'origin-request'

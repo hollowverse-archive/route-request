@@ -8,19 +8,14 @@ import {
   CloudFrontRequest,
   CloudFrontRequestEvent,
   CloudFrontHeaders,
+  CloudFrontResponse,
 } from 'aws-lambda';
-import { merge, times, uniq } from 'lodash';
-import {
-  createAssignEnvironmentToViewerRequest as assignEnvironmentToViewerRequest,
-  createAssignEnvironmentToViewerRequest,
-} from './assignEnvironmentToViewerRequest';
-import {
-  createRouteOriginRequest as routeOriginRequest,
-  createRouteOriginRequest,
-} from './routeOriginRequest';
+import { merge, times } from 'lodash';
+import { createAssignEnvironmentToViewerRequest } from './assignEnvironmentToViewerRequest';
+import { createRouteRequestToOrigin } from './routeRequestToOrigin';
 import { handler as setHeadersOnOriginResponse } from './setHeadersOnOriginResponse';
 
-const requestToEvent = (
+const toRequestEvent = (
   request: CloudFrontRequest,
 ): CloudFrontRequestEvent => ({
   Records: [
@@ -36,13 +31,9 @@ const requestToEvent = (
   ],
 });
 
-const requestToResponseEvent = (
-  response = {
-    headers: {},
-    status: '200',
-    statusDescription: 'OK',
-  },
-) => (request: CloudFrontRequest): CloudFrontResponseEvent => ({
+const toResponseEvent = (request: CloudFrontRequest) => (
+  response: CloudFrontResponse,
+): CloudFrontResponseEvent => ({
   Records: [
     {
       cf: {
@@ -69,8 +60,9 @@ type DeepPartial<T> = { [P in keyof T]?: DeepPartial<T[P]> };
 export type CreateTestContextOptions = {
   eventOverrides?: DeepPartial<CloudFrontRequestEvent>;
   contextOverrides?: DeepPartial<Context>;
-  publicEnvironments?: Record<string, number>;
-  findEnvByName?: typeof mockFindEnvByName;
+  publicBranches?: Record<string, number>;
+  getOriginResponse?(request: CloudFrontRequest): Promise<CloudFrontResponse>;
+  findEnvByName?(branch: string): Promise<string | undefined>;
 };
 
 type UnPromisify<T> = T extends Promise<infer R> ? R : T;
@@ -80,9 +72,21 @@ export type TestResult = Readonly<UnPromisify<ReturnType<typeof runTest>>>;
 export const runTest = async ({
   eventOverrides,
   contextOverrides,
-  publicEnvironments = { beta: 0.25, master: 0.75 },
+  getOriginResponse = async request => ({
+    status: '200',
+    statusDescription: 'OK',
+    headers: {
+      ['x-actual-environment']: [
+        {
+          key: 'x-actual-environment',
+          value: request.headers.host[0].value,
+        },
+      ],
+    },
+  }),
+  publicBranches = { beta: 0.25, master: 0.75 },
   findEnvByName = async (branch: string) => {
-    if (branch in publicEnvironments) {
+    if (branch in publicBranches) {
       return `https://${branch}.example.com`;
     }
 
@@ -130,19 +134,29 @@ export const runTest = async ({
     eventOverrides,
   );
 
-  const endToEndResponse = await createAssignEnvironmentToViewerRequest({
-    publicEnvironments,
-  })(event)
-    .then(requestToEvent)
-    .then(createRouteOriginRequest({ findEnvByName }))
-    .then(requestToResponseEvent())
+  const assignEnv = createAssignEnvironmentToViewerRequest({
+    publicBranches,
+  });
+  const routeRequestToOrigin = createRouteRequestToOrigin({ findEnvByName });
+
+  const response = await Promise.resolve(event)
+    .then(assignEnv)
+    .then(toRequestEvent)
+    .then(routeRequestToOrigin)
+    .then(getOriginResponse)
+    .then(toResponseEvent(event.Records[0].cf.request))
     .then(setHeadersOnOriginResponse);
 
-  const parsedResponseCookies = parseAllCookies(
-    endToEndResponse.headers['set-cookie'],
-  );
+  const responseCookies = parseAllCookies(response.headers['set-cookie']);
 
-  return { context, endToEndResponse, event, parsedResponseCookies };
+  const actualEnvironmentHost =
+    response.headers['x-actual-environment'][0].value;
+
+  return {
+    response,
+    responseCookies,
+    actualEnvironmentHost,
+  };
 };
 
 export const runTestManyTimes = async (
@@ -154,30 +168,28 @@ export const testBot = async (
   userAgent = 'Googlebot/2.1 (+http://www.googlebot.com/bot.html)',
   numTests = 300,
 ) => {
-  const results = await bluebird.map(
-    runTestManyTimes(numTests, {
-      eventOverrides: {
-        Records: [
-          {
-            cf: {
-              request: {
-                headers: {
-                  'user-agent': [
-                    {
-                      key: 'user-agent',
-                      value: userAgent,
-                    },
-                  ],
-                },
+  const results = await runTestManyTimes(numTests, {
+    eventOverrides: {
+      Records: [
+        {
+          cf: {
+            request: {
+              headers: {
+                'user-agent': [
+                  {
+                    key: 'user-agent',
+                    value: userAgent,
+                  },
+                ],
               },
             },
           },
-        ],
-      },
-    }),
-    ({ parsedResponseCookies }) => parsedResponseCookies.env,
-  );
+        },
+      ],
+    },
+  });
 
-  expect(results).not.toContain('beta');
-  expect(uniq(results)).toEqual(['master']);
+  results.forEach(({ responseCookies: { env } }) => {
+    expect(env).toEqual('master');
+  });
 };
