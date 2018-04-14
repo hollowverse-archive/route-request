@@ -3,7 +3,7 @@ import { TestResult, runTest, testBot, runTestManyTimes } from '../testHelpers';
 import { oneLine } from 'common-tags';
 import { countBy, mapValues } from 'lodash';
 
-describe('End to end, public environments', () => {
+describe('Public environments', () => {
   it('picks a random environment based on defined weights', async () => {
     const numTests = 1000;
     const results = await runTestManyTimes(numTests);
