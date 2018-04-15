@@ -20,6 +20,9 @@ async function main() {
   let isDeployment = false;
   if (isPullRequest === true) {
     console.info('Skipping deployment commands in PRs');
+    buildCommands.push(
+      'NODE_ENV=production yarn serverless package --stage production',
+    );
   } else {
     isDeployment = true;
   }
