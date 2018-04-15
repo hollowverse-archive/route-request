@@ -3,7 +3,7 @@ import memoizePromise from 'p-memoize';
 
 const apiGateway = new awsSdk.APIGateway({ region: 'us-east-1' });
 
-export const createFindEnvByName = (apiName: string) =>
+const createFindEnvByName = (apiNames: string[]) =>
   memoizePromise(async (branch: string) => {
     let env;
     let position: string | undefined;
@@ -19,7 +19,7 @@ export const createFindEnvByName = (apiName: string) =>
       }
 
       for (const api of apis) {
-        if (!api || !api.id || api.name !== apiName) {
+        if (!api || !api.id || !api.name || !apiNames.includes(api.name)) {
           continue;
         }
 
@@ -48,4 +48,7 @@ export const createFindEnvByName = (apiName: string) =>
     return env || undefined;
   });
 
-export const findEnvByName = createFindEnvByName('development-website');
+export const findEnvByName = createFindEnvByName([
+  'master-website',
+  'beta-website',
+]);
