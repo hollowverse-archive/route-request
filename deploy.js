@@ -12,7 +12,7 @@ const { IS_PULL_REQUEST } = shelljs.env;
 const isPullRequest = IS_PULL_REQUEST !== 'false';
 
 async function main() {
-  const buildCommands = ['yarn clean', 'yarn test', 'yarn build'];
+  const buildCommands = ['yarn test'];
   const deploymentCommands = [
     'NODE_ENV=production yarn serverless deploy --stage production',
   ];
