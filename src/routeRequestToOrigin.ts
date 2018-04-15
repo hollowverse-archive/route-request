@@ -3,7 +3,7 @@ import { createLambdaHandler } from '@hollowverse/utils/helpers/createLambdaHand
 import bluebird from 'bluebird';
 import find from 'lodash/find';
 import get from 'lodash/get';
-import { findEnvByName as findEbEnvByName } from './eb/findEnvByName';
+import { findEnvByName as findApiGatewayEnvByName } from './apiGateway/findEnvByName';
 import { parse as parseUrl } from 'url';
 
 type CreateRouteRequestToOriginOptions = {
@@ -65,8 +65,8 @@ export const createRouteRequestToOrigin = ({
   (request as any).origin = {
     custom: {
       domainName,
-      port: 80,
-      protocol: 'http',
+      port: 443,
+      protocol: 'https',
       sslProtocols: ['TLSv1', 'TLSv1.1'],
       path,
       readTimeout: 30,
@@ -82,6 +82,6 @@ export const createRouteRequestToOrigin = ({
 
 export const routeRequestToOrigin = createLambdaHandler(
   createRouteRequestToOrigin({
-    findEnvByName: findEbEnvByName,
+    findEnvByName: findApiGatewayEnvByName,
   }),
 );

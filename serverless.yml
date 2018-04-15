@@ -2,13 +2,15 @@ service: release-manager
 
 plugins:
   - serverless-webpack
-  # - serverless-plugin-cloudfront-lambda-edge
+  - serverless-plugin-cloudfront-lambda-edge
 
 custom:
   webpack:
     webpackConfig: webpack.config.ts
     packager: yarn
-    includeModules: true # Enable auto-packing of external modules
+    includeModules:
+      forceExclude:
+        - 'aws-sdk'
 
 provider:
   name: aws
@@ -18,6 +20,8 @@ provider:
     - Effect: Allow
       Action:
         - elasticbeanstalk:Describe*
+        - apigateway:GET
+        - apigateway:HEAD
       Resource: "*"
     - Effect: Allow
       Action:
@@ -49,35 +53,60 @@ functions:
       distribution: WebsiteDistribution
       eventType: 'origin-response'
 
-# resources:
-#    Resources:
-#       WebsiteDistribution:
-#          Type: 'AWS::CloudFront::Distribution'
-#          Properties:
-#             DistributionConfig:
-#                DefaultCacheBehavior:
-#                   TargetOriginId: 'WebsiteOrigin'
-#                   ViewerProtocolPolicy: 'redirect-to-https'
-#                   DefaultTTL: 600 # ten minutes
-#                   MaxTTL: 600 # ten minutes
-#                   Compress: true
-#                   ForwardedValues:
-#                      QueryString: false
-#                      Cookies:
-#                         Forward: 'none'
-#                DefaultRootObject: 'index.html'
-#                Enabled: true
-#                PriceClass: 'PriceClass_100'
-#                HttpVersion: 'http2'
-#                ViewerCertificate:
-#                   CloudFrontDefaultCertificate: true
-#                Origins:
-#                   -
-#                      Id: 'WebsiteBucketOrigin'
-#                      DomainName: { 'Fn::GetAtt': [ 'WebsiteBucket', 'DomainName' ] }
-#                      S3OriginConfig: {}
+resources:
+   Resources:
+      WebsiteDistribution:
+        Type: 'AWS::CloudFront::Distribution'
+        Properties:
+          DistributionConfig:
+            DefaultCacheBehavior:
+              TargetOriginId: 'WebsiteOrigin'
+              ViewerProtocolPolicy: 'redirect-to-https'
+              MinTTL: 0
+              AllowedMethods:
+                - GET
+                - HEAD
+                - OPTIONS
+                - POST
+                - PUT
+                - PATCH
+                - DELETE
+              CachedMethods:
+                - GET
+                - HEAD
+                - OPTIONS
+              Compress: true
+              ForwardedValues:
+                Headers:
+                  - Host
+                  - Origin
+                  - x-hollowverse-assigned-environment
+                  - x-hollowverse-requested-environment
+                  - x-hollowverse-requested-branch
+                QueryString: true
+                Cookies:
+                  Forward: 'whitelist'
+                  WhitelistedNames:
+                    - branch
+                    - env
+            Enabled: true
+            PriceClass: 'PriceClass_100'
+            HttpVersion: 'http2'
+            Aliases:
+              - dev.hollowverse.com
+            ViewerCertificate:
+              AcmCertificateArn: 'arn:aws:acm:us-east-1:251013100663:certificate/ed3ed857-b82f-4e9e-a4ab-9befb2c5e650'
+              MinimumProtocolVersion: TLSv1.1_2016
+              SslSupportMethod: sni-only
+            Origins:
+              -
+                Id: 'WebsiteOrigin'
+                DomainName: 'static.legacy.hollowverse.com'
+                CustomOriginConfig:
+                  OriginProtocolPolicy: 'https-only'
 
 package:
+  individually: true
   include:
     - src/**
   exclude:

@@ -19,7 +19,17 @@ module.exports = {
   module: {
     rules: [
       {
-        test: /\.ts$/i,
+        test: /\.jsx?$/i,
+        exclude: /node_modules/i,
+        use: [
+          {
+            loader: 'babel-loader',
+          },
+        ],
+      },
+      {
+        test: /\.tsx?$/i,
+        exclude: /node_modules/i,
         use: [
           {
             loader: 'babel-loader',
@@ -32,7 +42,7 @@ module.exports = {
     ],
   },
   resolve: {
-    extensions: ['.ts', '.js'],
+    extensions: ['.tsx', '.ts', '.jsx', '.js'],
   },
   externals: ['aws-sdk'],
   plugins: [

@@ -71,7 +71,6 @@ export type TestResult = Readonly<UnPromisify<ReturnType<typeof runTest>>>;
 
 export const runTest = async ({
   eventOverrides,
-  contextOverrides,
   getOriginResponse = async request => ({
     status: '200',
     statusDescription: 'OK',
@@ -93,24 +92,6 @@ export const runTest = async ({
     return undefined;
   },
 }: CreateTestContextOptions = {}) => {
-  const context: Context = merge(
-    {
-      functionName: 'assignEnvironmentToViewerRequest',
-      memoryLimitInMB: 128,
-      callbackWaitsForEmptyEventLoop: false,
-      invokedFunctionArn: 'any',
-      functionVersion: '13',
-      logGroupName: 'any',
-      awsRequestId: '534c650d-3d7b-4d4e-afce-f71d81b4f25c',
-      logStreamName: 'any',
-      getRemainingTimeInMillis: jest.fn(() => 1000),
-      done: jest.fn(),
-      fail: jest.fn(),
-      succeed: jest.fn(),
-    },
-    contextOverrides,
-  );
-
   const event: CloudFrontRequestEvent = merge(
     {
       Records: [
