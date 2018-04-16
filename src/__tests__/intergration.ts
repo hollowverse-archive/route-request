@@ -201,7 +201,7 @@ describe('Branch previewing', () => {
     });
   });
 
-  it('passes the requested branch name to `getEnvForBranchPreview`', async () => {
+  it('passes the requested branch name to `findEnvByName`', async () => {
     expect(testResult.findEnvByName).toHaveBeenCalledWith(
       'existingInternalBranch',
     );
@@ -209,11 +209,9 @@ describe('Branch previewing', () => {
 
   describe('Caching', () => {
     it('tells CDN not to cache the response', async () => {
-      expect(testResult.response.headers['cache-control'][0].value).toMatch(
-        /no-store/,
-      );
-      expect(testResult.response.headers['cache-control'][0].value).toMatch(
-        /revalidate/,
+      const cacheHeader = testResult.response.headers['cache-control'][0].value;
+      expect(cacheHeader).toMatch(
+        /no-store|proxy-revalidate|must-revalidate|s-maxage=0/,
       );
     });
   });
