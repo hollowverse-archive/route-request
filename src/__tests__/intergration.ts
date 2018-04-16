@@ -1,5 +1,10 @@
 // tslint:disable:no-non-null-assertion no-implicit-dependencies
-import { TestResult, runTest, testBot, runTestManyTimes } from '../testHelpers';
+import {
+  testBot,
+  runTestManyTimes,
+  createAndRunTestResponse,
+  CreateAndRunTestResponseResult,
+} from '../testHelpers';
 import { oneLine } from 'common-tags';
 import { countBy, mapValues } from 'lodash';
 
@@ -16,7 +21,7 @@ describe('Public environments', () => {
     expect(cookies.master).toBeCloseTo(0.75, 1);
   });
 
-  let testResult: TestResult;
+  let testResult: CreateAndRunTestResponseResult;
 
   describe('for requests with an existing `env` cookie', () => {
     it('does not overwrite `env` cookie if it is a valid environment', async () => {
@@ -26,23 +31,10 @@ describe('Public environments', () => {
           master: 0.2,
           beta: 0.1,
         },
-        eventOverrides: {
-          Records: [
-            {
-              cf: {
-                request: {
-                  headers: {
-                    cookie: [
-                      {
-                        key: 'cookie',
-                        value: 'foo=bar; env=whatever; abc=xyz;',
-                      },
-                    ],
-                  },
-                },
-              },
-            },
-          ],
+        cookies: {
+          foo: 'bar',
+          env: 'whatever',
+          abc: 'xyz',
         },
       });
 
@@ -58,23 +50,10 @@ describe('Public environments', () => {
           master: 1,
           beta: 1,
         },
-        eventOverrides: {
-          Records: [
-            {
-              cf: {
-                request: {
-                  headers: {
-                    cookie: [
-                      {
-                        key: 'cookie',
-                        value: 'foo=bar; env=nonexistent; abc=xyz;',
-                      },
-                    ],
-                  },
-                },
-              },
-            },
-          ],
+        cookies: {
+          foo: 'bar',
+          env: 'nonexistent',
+          abc: 'xyz',
         },
       });
 
@@ -87,7 +66,7 @@ describe('Public environments', () => {
 
   describe('for requests without a Cookie header,', () => {
     beforeEach(async () => {
-      testResult = await runTest();
+      testResult = await createAndRunTestResponse();
     });
 
     it('request is routed to the same environment set in cookie', () => {
@@ -108,19 +87,11 @@ describe('Public environments', () => {
 
   describe('for requests with an existing Cookie header, but without an `env` cookie,', () => {
     beforeEach(async () => {
-      testResult = await runTest({
-        eventOverrides: {
-          Records: [
-            {
-              cf: {
-                request: {
-                  headers: {
-                    cookie: [{ key: 'cookie', value: 'foo=bar; abc=xyz;' }],
-                  },
-                },
-              },
-            },
-          ],
+      testResult = await createAndRunTestResponse({
+        uri: '/path',
+        cookies: {
+          foo: 'bar',
+          abc: 'xyz',
         },
       });
     });
@@ -141,16 +112,60 @@ describe('Public environments', () => {
 
       expect(testResult.responseCookies).not.toHaveProperty('abc');
     });
-  });
 
-  describe('for bots', () => {
-    it('should always set `env` cookie to master', async () => {
-      await testBot();
+    it('does not change the original `Cache-Control` header', async () => {
+      testResult = await createAndRunTestResponse({
+        getOriginResponseOverrides: async () => ({
+          headers: {
+            'cache-control': [
+              {
+                key: 'cache-control',
+                value: 'whatever',
+              },
+            ],
+          },
+        }),
+      });
+
+      expect(testResult.response.headers['cache-control'][0].value).toMatch(
+        'whatever',
+      );
     });
 
-    it('treats WebPageTest as a bot and always sets `env` to master', async () => {
-      // tslint:disable-next-line:no-multiline-string
-      await testBot(oneLine`
+    it('passes the requested environment `findEnvByName`', () => {
+      expect(testResult.findEnvByName).toHaveBeenCalledWith(
+        expect.stringMatching(/master|beta/),
+      );
+    });
+
+    it('checks if path is allowed for `Set-Cookie`', async () => {
+      expect(testResult.isSetCookieAllowedForPath).toHaveBeenCalledTimes(1);
+      expect(testResult.isSetCookieAllowedForPath).toHaveBeenCalledWith(
+        expect.stringMatching(/\/path\/?/),
+      );
+    });
+
+    it('sets the response `Set-Cookie` header on allowed paths', async () => {
+      expect(testResult.responseCookies).toHaveProperty('env');
+      expect(testResult.responseCookies.env).toMatch(/beta|master/);
+    });
+
+    it('does not set the response `Set-Cookie` header on disallowed paths', async () => {
+      testResult = await createAndRunTestResponse({
+        isSetCookieAllowedForPath: () => false,
+      });
+
+      expect(testResult.responseCookies).not.toHaveProperty('env');
+    });
+
+    describe('for bots', () => {
+      it('should always set `env` cookie to master', async () => {
+        await testBot();
+      });
+
+      it('treats WebPageTest as a bot and always sets `env` to master', async () => {
+        // tslint:disable-next-line:no-multiline-string
+        await testBot(oneLine`
         Mozilla/5.0 (Linux;
         Android 4.4.2; Nexus 4 Build/KOT49H)
         AppleWebKit/537.36 (KHTML, like Gecko)
@@ -158,6 +173,93 @@ describe('Public environments', () => {
         Mobile Safari/537.36
         WebPageTest
       `);
+      });
+    });
+  });
+});
+
+describe('Branch previewing', () => {
+  let testResult: CreateAndRunTestResponseResult;
+
+  beforeEach(async () => {
+    testResult = await createAndRunTestResponse({
+      publicBranches: {
+        master: 1,
+        beta: 1,
+      },
+      cookies: {
+        env: 'master',
+        branch: 'existingInternalBranch',
+      },
+      findEnvByName: jest.fn(async (branch: string) => {
+        if (['beta', 'master', 'existingInternalBranch'].includes(branch)) {
+          return `https://${branch}.example.com`;
+        }
+
+        return undefined;
+      }),
+    });
+  });
+
+  it('passes the requested branch name to `getEnvForBranchPreview`', async () => {
+    expect(testResult.findEnvByName).toHaveBeenCalledWith(
+      'existingInternalBranch',
+    );
+  });
+
+  describe('Caching', () => {
+    it('tells CDN not to cache the response', async () => {
+      expect(testResult.response.headers['cache-control'][0].value).toMatch(
+        /no-store/,
+      );
+      expect(testResult.response.headers['cache-control'][0].value).toMatch(
+        /revalidate/,
+      );
+    });
+  });
+
+  describe('If the requested branch actually exists', () => {
+    it('`branch` cookie always takes precedence over `env` cookie', async () => {
+      const responses = await runTestManyTimes(100, {
+        cookies: {
+          env: 'master',
+          branch: 'beta',
+        },
+      });
+
+      responses.forEach(response => {
+        expect(response.actualEnvironmentHost).toMatch(/beta/);
+      });
+    });
+
+    it('`branch` query string parameter works like the `branch` cookie', async () => {
+      const responses = await runTestManyTimes(100, {
+        cookies: {
+          env: 'master',
+        },
+        querystring: 'branch=beta',
+      });
+
+      responses.forEach(response => {
+        expect(response.actualEnvironmentHost).toMatch(/beta/);
+      });
+    });
+  });
+
+  describe('If the requested branch does not exist', () => {
+    it('fails loudly', async () => {
+      expect.hasAssertions();
+
+      try {
+        await testResult.getResponse({
+          cookies: {
+            branch: 'nonExistingBranch',
+          },
+        });
+      } catch (error) {
+        expect(error).toBeInstanceOf(Error);
+        expect(error.message).toMatch(/find/i);
+      }
     });
   });
 });

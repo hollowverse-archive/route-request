@@ -13,7 +13,7 @@ import {
 import { merge, times } from 'lodash';
 import { createAssignEnvironmentToViewerRequest } from './assignEnvironmentToViewerRequest';
 import { createRouteRequestToOrigin } from './routeRequestToOrigin';
-import { handler as setHeadersOnOriginResponse } from './setHeadersOnOriginResponse';
+import { createSetHeadersOnOriginResponse } from './setHeadersOnOriginResponse';
 
 const toRequestEvent = (
   request: CloudFrontRequest,
@@ -58,42 +58,93 @@ export const parseAllCookies = (
 type DeepPartial<T> = { [P in keyof T]?: DeepPartial<T[P]> };
 
 export type CreateTestContextOptions = {
-  eventOverrides?: DeepPartial<CloudFrontRequestEvent>;
   contextOverrides?: DeepPartial<Context>;
   publicBranches?: Record<string, number>;
-  getOriginResponse?(request: CloudFrontRequest): Promise<CloudFrontResponse>;
+  getOriginResponseOverrides?(
+    request: CloudFrontRequest,
+  ): Promise<Partial<CloudFrontResponse>>;
   findEnvByName?(branch: string): Promise<string | undefined>;
+  isSetCookieAllowedForPath?(path: string): boolean;
 };
 
 type UnPromisify<T> = T extends Promise<infer R> ? R : T;
 
-export type TestResult = Readonly<UnPromisify<ReturnType<typeof runTest>>>;
+export type CreateAndRunTestResponseResult = Readonly<
+  UnPromisify<ReturnType<typeof createAndRunTestResponse>>
+>;
 
-export const runTest = async ({
-  eventOverrides,
-  getOriginResponse = async request => ({
-    status: '200',
-    statusDescription: 'OK',
-    headers: {
-      ['x-actual-environment']: [
-        {
-          key: 'x-actual-environment',
-          value: request.headers.host[0].value,
-        },
-      ],
-    },
-  }),
+export type TestContext = Readonly<
+  UnPromisify<ReturnType<typeof createTestContext>>
+>;
+
+const defaultGetOriginResponse = async (request: CloudFrontRequest) => ({
+  status: '200',
+  statusDescription: 'OK',
+  headers: {
+    ['x-actual-environment']: [
+      {
+        key: 'x-actual-environment',
+        value: request.headers.host[0].value,
+      },
+    ],
+  },
+});
+
+export type GetResponseResult = {
+  response: CloudFrontResponse;
+  responseCookies: Record<string, string>;
+  actualEnvironmentHost: string;
+};
+
+export const createTestContext = async ({
+  getOriginResponseOverrides = defaultGetOriginResponse,
   publicBranches = { beta: 0.25, master: 0.75 },
-  findEnvByName = async (branch: string) => {
+  findEnvByName = jest.fn(async (branch: string) => {
     if (branch in publicBranches) {
       return `https://${branch}.example.com`;
     }
 
     return undefined;
-  },
+  }),
+  isSetCookieAllowedForPath = jest.fn(() => true),
 }: CreateTestContextOptions = {}) => {
-  const event: CloudFrontRequestEvent = merge(
-    {
+  const assignEnv = createAssignEnvironmentToViewerRequest({
+    publicBranches,
+  });
+  const routeRequestToOrigin = createRouteRequestToOrigin({ findEnvByName });
+  const setHeadersOnOriginResponse = createSetHeadersOnOriginResponse({
+    isSetCookieAllowedForPath,
+  });
+
+  const getResponse = async ({
+    uri = '/',
+    querystring = '',
+    cookies,
+    userAgent,
+  }: GetTestResponseOptions = {}): Promise<GetResponseResult> => {
+    const headers: CloudFrontHeaders = {};
+
+    if (cookies) {
+      headers.cookie = [
+        {
+          key: 'cookie',
+          value: Object.entries(cookies)
+            .map(([key, value]) => `${key}=${value}`)
+            .join(';'),
+        },
+      ];
+    }
+
+    if (userAgent) {
+      headers['user-agent'] = [
+        {
+          key: 'user-agent',
+          value: userAgent,
+        },
+      ];
+    }
+
+    const event: CloudFrontRequestEvent = {
       Records: [
         {
           cf: {
@@ -104,70 +155,82 @@ export const runTest = async ({
             request: {
               clientIp: '192.168.1.1',
               method: 'GET',
-              querystring: '',
-              uri: 'https://hollowverse.com',
-              headers: {},
+              querystring,
+              uri,
+              headers,
             },
           },
         },
       ],
-    },
-    eventOverrides,
-  );
+    };
 
-  const assignEnv = createAssignEnvironmentToViewerRequest({
-    publicBranches,
-  });
-  const routeRequestToOrigin = createRouteRequestToOrigin({ findEnvByName });
+    const response = await Promise.resolve(event)
+      .then(assignEnv)
+      .then(toRequestEvent)
+      .then(routeRequestToOrigin)
+      .then(async e =>
+        merge(
+          await defaultGetOriginResponse(e),
+          await getOriginResponseOverrides(e),
+        ),
+      )
+      .then(toResponseEvent(event.Records[0].cf.request))
+      .then(setHeadersOnOriginResponse);
 
-  const response = await Promise.resolve(event)
-    .then(assignEnv)
-    .then(toRequestEvent)
-    .then(routeRequestToOrigin)
-    .then(getOriginResponse)
-    .then(toResponseEvent(event.Records[0].cf.request))
-    .then(setHeadersOnOriginResponse);
+    const responseCookies = parseAllCookies(response.headers['set-cookie']);
 
-  const responseCookies = parseAllCookies(response.headers['set-cookie']);
+    const actualEnvironmentHost =
+      response.headers['x-actual-environment'][0].value;
 
-  const actualEnvironmentHost =
-    response.headers['x-actual-environment'][0].value;
+    return {
+      actualEnvironmentHost,
+      response,
+      responseCookies,
+    };
+  };
 
   return {
-    response,
-    responseCookies,
-    actualEnvironmentHost,
+    getResponse,
+    findEnvByName,
+    isSetCookieAllowedForPath,
+  };
+};
+
+type GetTestResponseOptions = {
+  cookies?: Record<string, string>;
+  uri?: string;
+  querystring?: string;
+  userAgent?: string;
+};
+
+type CreateAndRunTestOptions = CreateTestContextOptions &
+  GetTestResponseOptions;
+
+export const createAndRunTestResponse = async (
+  options?: CreateAndRunTestOptions,
+) => {
+  const context = await createTestContext(options);
+
+  const responseReturn = await context.getResponse(options);
+
+  return {
+    ...responseReturn,
+    ...context,
   };
 };
 
 export const runTestManyTimes = async (
   numTests = 300,
-  options?: CreateTestContextOptions,
-) => bluebird.map(times(numTests), async () => runTest(options));
+  options?: CreateAndRunTestOptions,
+) =>
+  bluebird.map(times(numTests), async () => createAndRunTestResponse(options));
 
 export const testBot = async (
   userAgent = 'Googlebot/2.1 (+http://www.googlebot.com/bot.html)',
   numTests = 300,
 ) => {
   const results = await runTestManyTimes(numTests, {
-    eventOverrides: {
-      Records: [
-        {
-          cf: {
-            request: {
-              headers: {
-                'user-agent': [
-                  {
-                    key: 'user-agent',
-                    value: userAgent,
-                  },
-                ],
-              },
-            },
-          },
-        },
-      ],
-    },
+    userAgent,
   });
 
   results.forEach(({ responseCookies: { env } }) => {

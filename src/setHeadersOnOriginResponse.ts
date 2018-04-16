@@ -26,15 +26,16 @@ const expireCookie = (cookieName: string) =>
     secure: true,
   });
 
-export const handler = async (event: CloudFrontResponseEvent) => {
-  const { request, response } = event.Records[0].cf;
+type CreateSetHeadersOnOriginResponseOptions = {
+  isSetCookieAllowedForPath(path: string): boolean;
+};
 
-  if (
-    request.uri.toLowerCase().startsWith('/static') ||
-    request.uri.toLowerCase().startsWith('/log')
-  ) {
-    return response;
-  }
+export const createSetHeadersOnOriginResponse = ({
+  isSetCookieAllowedForPath,
+}: CreateSetHeadersOnOriginResponseOptions) => async (
+  event: CloudFrontResponseEvent,
+) => {
+  const { request, response } = event.Records[0].cf;
 
   const env: string | undefined = get(request.headers, [
     'x-hollowverse-assigned-environment',
@@ -52,9 +53,13 @@ export const handler = async (event: CloudFrontResponseEvent) => {
     response.headers['cache-control'] = [
       {
         key: 'Cache-Control',
-        value: 'no-store, no-cache, must-revalidate',
+        value: 'no-store, no-cache, proxy-revalidate',
       },
     ];
+  }
+
+  if (!isSetCookieAllowedForPath(request.uri)) {
+    return response;
   }
 
   const envCookie =
@@ -81,4 +86,17 @@ export const handler = async (event: CloudFrontResponseEvent) => {
   return response;
 };
 
-export const setHeadersOnOriginResponse = createLambdaHandler(handler);
+export const setHeadersOnOriginResponse = createLambdaHandler(
+  createSetHeadersOnOriginResponse({
+    isSetCookieAllowedForPath: path => {
+      if (
+        path.toLowerCase().startsWith('/static') ||
+        path.toLowerCase().startsWith('/log')
+      ) {
+        return false;
+      }
+
+      return true;
+    },
+  }),
+);
