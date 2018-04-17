@@ -1,9 +1,9 @@
 {
-  "name": "perf-monitor",
-  "description": "An AWS Lambda function that checks and reports the performance of hollowverse.com regularly",
+  "name": "route-request",
+  "description": "Route new visitors of Hollowverse.com to different versions of the website for testing purposes",
   "version": "1.0.0",
   "main": "index.js",
-  "repository": "git@github.com:hollowverse/perf-monitor.git",
+  "repository": "git@github.com:hollowverse/route-request.git",
   "author": "Muhammad Fawwaz Orabi <mfawwaz93@gmail.com>",
   "license": "Unlicense",
   "private": true,
