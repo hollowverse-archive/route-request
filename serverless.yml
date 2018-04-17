@@ -5,6 +5,16 @@ plugins:
   - serverless-plugin-cloudfront-lambda-edge
 
 custom:
+  aliases:
+    development:
+      - dev.hollowverse.com
+    production:
+      - hollowverse.com
+      - www.hollowverse.com
+      - static.hollowverse.com
+      - thehollowverse.com
+      - www.thehollowverse.com
+
   webpack:
     webpackConfig: webpack.config.ts
     packager: yarn
@@ -93,13 +103,7 @@ resources:
             Enabled: true
             PriceClass: 'PriceClass_100'
             HttpVersion: 'http2'
-            Aliases:
-              # - hollowverse.com
-              # - www.hollowverse.com
-              # - static.hollowverse.com
-              - dev.hollowverse.com
-              # - thehollowverse.com
-              # - www.thehollowverse.com
+            Aliases: ${self:custom.aliases.${self:provider.stage}}
             ViewerCertificate:
               AcmCertificateArn: 'arn:aws:acm:us-east-1:251013100663:certificate/ed3ed857-b82f-4e9e-a4ab-9befb2c5e650'
               MinimumProtocolVersion: TLSv1.1_2016
