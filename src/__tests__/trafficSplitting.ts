@@ -115,7 +115,9 @@ describe('Traffic splitting', () => {
 
     it('does not change the original `Cache-Control` header', async () => {
       testResult = await createAndRunTestResponse({
-        getOriginResponseOverrides: async () => ({
+        getOriginResponse: async () => ({
+          status: '200',
+          statusDescription: 'OK',
           headers: {
             'cache-control': [
               {

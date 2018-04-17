@@ -10,7 +10,7 @@ import {
   CloudFrontHeaders,
   CloudFrontResponse,
 } from 'aws-lambda';
-import { merge, times } from 'lodash';
+import { merge, times, get } from 'lodash';
 import { createAssignEnvironmentToViewerRequest } from './assignEnvironmentToViewerRequest';
 import { createRouteRequestToOrigin } from './routeRequestToOrigin';
 import { createSetHeadersOnOriginResponse } from './setHeadersOnOriginResponse';
@@ -72,9 +72,7 @@ type DeepPartial<T> = { [P in keyof T]?: DeepPartial<T[P]> };
 export type CreateTestContextOptions = {
   contextOverrides?: DeepPartial<Context>;
   publicBranches?: Record<string, number>;
-  getOriginResponseOverrides?(
-    request: CloudFrontRequest,
-  ): Promise<Partial<CloudFrontResponse>>;
+  getOriginResponse?(request: CloudFrontRequest): Promise<CloudFrontResponse>;
   findEnvByName?(branch: string): Promise<string | undefined>;
   isSetCookieAllowedForPath?(path: string): boolean;
 };
@@ -105,11 +103,11 @@ const defaultGetOriginResponse = async (request: CloudFrontRequest) => ({
 export type GetResponseResult = {
   response: CloudFrontResponse;
   responseCookies: Record<string, string>;
-  actualEnvironmentHost: string;
+  actualEnvironmentHost: string | undefined;
 };
 
 export const createTestContext = async ({
-  getOriginResponseOverrides = defaultGetOriginResponse,
+  getOriginResponse = defaultGetOriginResponse,
   publicBranches = { beta: 0.25, master: 0.75 },
   findEnvByName = jest.fn(async (branch: string) => {
     if (branch in publicBranches) {
@@ -180,19 +178,17 @@ export const createTestContext = async ({
       .then(assignEnv)
       .then(toRequestEvent)
       .then(routeRequestToOrigin)
-      .then(async e =>
-        merge(
-          await defaultGetOriginResponse(e),
-          await getOriginResponseOverrides(e),
-        ),
-      )
+      .then(getOriginResponse)
       .then(toResponseEvent(event.Records[0].cf.request))
       .then(setHeadersOnOriginResponse);
 
     const responseCookies = parseAllCookies(response.headers['set-cookie']);
 
-    const actualEnvironmentHost =
-      response.headers['x-actual-environment'][0].value;
+    const actualEnvironmentHost: string | undefined = get(response.headers, [
+      'x-actual-environment',
+      '0',
+      'value',
+    ]);
 
     return {
       actualEnvironmentHost,
