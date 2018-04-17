@@ -1,3 +1,6 @@
 {
-  "extends": "@hollowverse/config/lambda/.babelrc"
+  "extends": "@hollowverse/config/lambda/.babelrc",
+  "plugins": [
+    "lodash"
+  ]
 }

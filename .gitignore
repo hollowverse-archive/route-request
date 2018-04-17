@@ -40,6 +40,9 @@ node_modules/
 
 # Builds
 dist
+build.zip
+.serverless
+.webpack
 
 # Editor configs
 .vscode/**/*
@@ -48,5 +51,3 @@ dist
 secrets/**/*
 !secrets/**/*.enc
 !secrets/**/*.d.ts
-
-build.zip

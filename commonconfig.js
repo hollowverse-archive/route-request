@@ -13,7 +13,7 @@ module.exports = {
       validation: 'ignore',
       patterns: [
         '*/**/typings/*',
-        '__tests__/**/*',
+        '**/__tests__/**/*',
         'docker-compose.yml',
         '**/LICENSE.md',
         '**/README.md',

@@ -1,0 +1,124 @@
+service: route-request
+
+plugins:
+  - serverless-webpack
+  - serverless-plugin-cloudfront-lambda-edge
+
+custom:
+  aliases:
+    development:
+      - dev.hollowverse.com
+    production:
+      - hollowverse.com
+      - www.hollowverse.com
+      - static.hollowverse.com
+      - thehollowverse.com
+      - www.thehollowverse.com
+
+  webpack:
+    webpackConfig: webpack.config.ts
+    packager: yarn
+    includeModules:
+      forceExclude:
+        - 'aws-sdk'
+
+provider:
+  name: aws
+  runtime: nodejs6.10
+  stage: ${opt:stage, 'development'}
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - elasticbeanstalk:Describe*
+        - apigateway:GET
+        - apigateway:HEAD
+      Resource: "*"
+    - Effect: Allow
+      Action:
+        - logs:CreateLogGroup
+        - logs:CreateLogStream
+        - logs:PutLogEvents
+      Resource: "*"
+
+functions:
+  assignEnvironmentToViewerRequest:
+    memorySize: 128
+    timeout: 5
+    handler: src/assignEnvironmentToViewerRequest.assignEnvironmentToViewerRequest
+    lambdaAtEdge:
+      distribution: WebsiteDistribution
+      eventType: 'viewer-request'
+  routeRequestToOrigin:
+    memorySize: 128
+    timeout: 5
+    handler: src/routeRequestToOrigin.routeRequestToOrigin
+    lambdaAtEdge:
+      distribution: WebsiteDistribution
+      eventType: 'origin-request'
+  setHeadersOnOriginResponse:
+    memorySize: 128
+    timeout: 5
+    handler: src/setHeadersOnOriginResponse.setHeadersOnOriginResponse
+    lambdaAtEdge:
+      distribution: WebsiteDistribution
+      eventType: 'origin-response'
+
+# Reference: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-product-property-reference.html
+resources:
+   Resources:
+      WebsiteDistribution:
+        Type: 'AWS::CloudFront::Distribution'
+        Properties:
+          DistributionConfig:
+            DefaultCacheBehavior:
+              TargetOriginId: 'WebsiteOrigin'
+              ViewerProtocolPolicy: 'redirect-to-https'
+              MinTTL: 0
+              AllowedMethods:
+                - GET
+                - HEAD
+                - OPTIONS
+                - POST
+                - PUT
+                - PATCH
+                - DELETE
+              CachedMethods:
+                - GET
+                - HEAD
+                - OPTIONS
+              Compress: true
+              ForwardedValues:
+                Headers:
+                  - Host
+                  - Origin
+                  - x-hollowverse-assigned-environment
+                  - x-hollowverse-requested-environment
+                  - x-hollowverse-requested-branch
+                QueryString: true
+                Cookies:
+                  Forward: 'whitelist'
+                  WhitelistedNames:
+                    - branch
+                    - env
+            Enabled: true
+            PriceClass: 'PriceClass_100'
+            HttpVersion: 'http2'
+            Aliases: ${self:custom.aliases.${self:provider.stage}}
+            ViewerCertificate:
+              AcmCertificateArn: 'arn:aws:acm:us-east-1:251013100663:certificate/ed3ed857-b82f-4e9e-a4ab-9befb2c5e650'
+              MinimumProtocolVersion: TLSv1.1_2016
+              SslSupportMethod: sni-only
+            Origins:
+              -
+                Id: 'WebsiteOrigin'
+                DomainName: 'static.legacy.hollowverse.com'
+                CustomOriginConfig:
+                  OriginProtocolPolicy: 'https-only'
+
+package:
+  individually: true
+  include:
+    - src/**
+  exclude:
+    - .webpack
+
