@@ -49,11 +49,23 @@ const toResponseEvent = (request: CloudFrontRequest) => (
 });
 
 export const parseAllCookies = (
-  headers: CloudFrontHeaders[keyof CloudFrontHeaders],
-) =>
-  (headers || [])
-    .map(header => cookie.parse(header.value))
-    .reduce((acc, cookiesInHeader) => ({ ...acc, ...cookiesInHeader }), {});
+  /**
+   * While the type of this is not explicitly declare as possibly `undefined`,
+   * it could actually be `undefined` in real Lambda environments.
+   */
+  headers: CloudFrontHeaders[keyof CloudFrontHeaders] | undefined,
+) => {
+  if (headers) {
+    return headers.map(header => cookie.parse(header.value)).reduce(
+      (acc, cookiesInHeader) => ({ ...acc, ...cookiesInHeader }),
+      // It's important to pass an empty object as a starting value,
+      // otherwise it would cause a runtime error
+      {},
+    );
+  }
+
+  return {};
+};
 
 type DeepPartial<T> = { [P in keyof T]?: DeepPartial<T[P]> };
 
