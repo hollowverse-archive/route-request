@@ -6,7 +6,7 @@ The functions work at different stages of CloudFront request processing (see the
 
 ![](https://docs.aws.amazon.com/lambda/latest/dg/images/cloudfront-events-that-trigger-lambda-functions.png 'The different stages of request processing a Lambda@Edge can be executed at. Source: https://docs.aws.amazon.com/lambda/latest/dg/lambda-edge.html')
 
-## Traffic splitting
+## Traffic Splitting
 
 * [`assignEnvironmentToViewerRequest`](./src/assignEnvironmentToViewerRequest.ts) picks one of the public environments and stores the assigned environment in a header, this happens before CloudFront checks the cache. That header must be white-listed in the CloudFront distribution so that different versions of the same URL can be cached based on the environment assigned.
 * [`routeRequestToOrigin`](./src/routeRequestToOrigin.ts) looks at the header assigned in the previous stage, fetches the corresponding environment URL and instructs CloudFront to fetch the response from that URL. CloudFront either fetches the response from the specified origin or from its cache.
