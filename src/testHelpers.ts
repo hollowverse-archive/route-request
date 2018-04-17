@@ -10,7 +10,7 @@ import {
   CloudFrontHeaders,
   CloudFrontResponse,
 } from 'aws-lambda';
-import { merge, times, get } from 'lodash';
+import { times, get } from 'lodash';
 import { createAssignEnvironmentToViewerRequest } from './assignEnvironmentToViewerRequest';
 import { createRouteRequestToOrigin } from './routeRequestToOrigin';
 import { createSetHeadersOnOriginResponse } from './setHeadersOnOriginResponse';
