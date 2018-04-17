@@ -50,7 +50,7 @@ const toResponseEvent = (request: CloudFrontRequest) => (
 
 export const parseAllCookies = (
   /**
-   * While the type of this is not explicitly declare as possibly `undefined`,
+   * While the type of this is not explicitly declared as possibly `undefined`,
    * it could actually be `undefined` in real Lambda environments.
    */
   headers: CloudFrontHeaders[keyof CloudFrontHeaders] | undefined,
