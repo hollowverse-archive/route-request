@@ -166,12 +166,12 @@ describe('Traffic splitting', () => {
       it('treats WebPageTest as a bot and always sets `env` to master', async () => {
         // tslint:disable-next-line:no-multiline-string
         await testBot(oneLine`
-        Mozilla/5.0 (Linux;
-        Android 4.4.2; Nexus 4 Build/KOT49H)
-        AppleWebKit/537.36 (KHTML, like Gecko)
-        Chrome/65.0.3325.162
-        Mobile Safari/537.36
-        WebPageTest
+          Mozilla/5.0 (Linux;
+          Android 4.4.2; Nexus 4 Build/KOT49H)
+          AppleWebKit/537.36 (KHTML, like Gecko)
+          Chrome/65.0.3325.162
+          Mobile Safari/537.36
+          WebPageTest
       `);
       });
     });
