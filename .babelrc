@@ -1,6 +1,14 @@
 {
-  "extends": "@hollowverse/config/lambda/.babelrc",
-  "plugins": [
-    "lodash"
+  "extends": "@hollowverse/config/babel/node/.babelrc",
+  "presets": [
+    [
+      "@babel/env",
+      {
+        "targets": {
+          "node": "6.10"
+        },
+        "useBuiltIns": "usage"
+      }
+    ]
   ]
 }

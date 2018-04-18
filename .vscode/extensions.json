@@ -1,0 +1,16 @@
+{
+  "recommendations": [
+    "streetsidesoftware.code-spell-checker",
+    "eg2.tslint",
+    "esbenp.prettier-vscode",
+    "christian-kohler.path-intellisense",
+    "christian-kohler.npm-intellisense",
+    "kumar-harsh.graphql-for-vscode",
+    "eamodio.gitlens",
+    "EditorConfig.editorconfig",
+    "kisstkondoros.csstriggers",
+    "Orta.vscode-jest",
+    "asvetliakov.snapshot-tools",
+    "dbaeumer.vscode-eslint"
+  ]
+}

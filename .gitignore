@@ -44,10 +44,15 @@ build.zip
 .serverless
 .webpack
 
-# Editor configs
-.vscode/**/*
-!.vscode/launch.json
-
 secrets/**/*
 !secrets/**/*.enc
 !secrets/**/*.d.ts
+build
+
+# Elastic Beanstalk Files
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml
+
+# Created by Serverless
+.build

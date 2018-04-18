@@ -8,8 +8,8 @@
   "license": "Unlicense",
   "private": true,
   "scripts": {
-    "pretest": "run-p -l --aggregate-output validate-filenames lint",
-    "test": "jest --colors",
+    "pretest": "run-p -l --aggregate-output common-check lint",
+    "test": "yarn jest",
     "check-ts/src": "tsc --project ./src --noEmit",
     "check-ts/root": "tsc --project ./ --noEmit",
     "check-ts": "run-p 'check-ts/*'",
@@ -17,9 +17,16 @@
     "clean": "del-cli '.serverless' '.webpack'",
     "lint": "run-p -l --aggregate-output lint-ts lint-js check-ts",
     "lint-js": "eslint '**/*.js{,x}'",
-    "lint-ts": "tslint './*.ts' 'src/**/*.ts{,x}' --project .",
-    "validate-filenames": "validate-filenames --config commonconfig.js",
-    "lint-staged": "lint-staged"
+    "lint-ts": "tslint 'src/**/*.ts' --project .",
+    "validate-filenames": "validate-filenames",
+    "lint-staged": "lint-staged",
+    "pre-push": "yarn pretest",
+    "pre-commit": "yarn common-check",
+    "common-check": "run-p -l -c --aggregate-output validate-filenames 'clown check' check-integrity",
+    "tslint": "yarn lint-ts",
+    "jest": "TZ=UTC NODE_ENV=test jest",
+    "clown": "clown",
+    "check-integrity": "yarn check --integrity"
   },
   "jest": {
     "globals": {
@@ -28,9 +35,12 @@
       }
     },
     "transform": {
-      "^.+\\.tsx?$": "<rootDir>/node_modules/ts-jest/preprocessor.js"
+      "^.+\\.tsx?$": "ts-jest"
     },
     "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$",
+    "modulePathIgnorePatterns": [
+      "bin"
+    ],
     "moduleFileExtensions": [
       "ts",
       "tsx",
@@ -40,8 +50,9 @@
     ]
   },
   "dependencies": {
-    "@babel/runtime": "^7.0.0-beta.41",
-    "@hollowverse/utils": "^4.1.5",
+    "@babel/polyfill": "^7.0.0-beta.44",
+    "@babel/runtime": "^7.0.0-beta.44",
+    "@hollowverse/utils": "^6.0.0",
     "aws-sdk": "2.205.0",
     "bluebird": "^3.5.1",
     "cookie": "^0.3.1",
@@ -55,16 +66,15 @@
     "babel-core": "^7.0.0-bridge.0"
   },
   "devDependencies": {
-    "@babel/cli": "^7.0.0-beta.41",
-    "@babel/core": "^7.0.0-beta.41",
-    "@babel/node": "^7.0.0-beta.41",
-    "@babel/plugin-proposal-object-rest-spread": "^7.0.0-beta.41",
-    "@babel/plugin-transform-runtime": "^7.0.0-beta.41",
-    "@babel/polyfill": "^7.0.0-beta.41",
-    "@babel/preset-env": "^7.0.0-beta.41",
-    "@babel/register": "^7.0.0-beta.41",
-    "@hollowverse/config": "^4.0.0",
-    "@hollowverse/validate-filenames": "^1.3.9",
+    "@babel/cli": "^7.0.0-beta.44",
+    "@babel/core": "^7.0.0-beta.44",
+    "@babel/node": "^7.0.0-beta.44",
+    "@babel/plugin-proposal-object-rest-spread": "^7.0.0-beta.44",
+    "@babel/plugin-transform-runtime": "^7.0.0-beta.44",
+    "@babel/preset-env": "^7.0.0-beta.44",
+    "@hollowverse/clown": "^3.0.1",
+    "@hollowverse/config": "^24.0.0",
+    "@hollowverse/validate-filenames": "^3.0.2",
     "@types/aws-lambda": "^0.0.32",
     "@types/aws-sdk": "^2.7.0",
     "@types/bluebird": "^3.5.20",
@@ -79,23 +89,23 @@
     "@types/tmp": "^0.0.33",
     "@types/webpack": "3",
     "@types/weighted": "^0.0.5",
-    "babel-eslint": "^8.2.1",
+    "babel-eslint": "^8.2.2",
     "babel-loader": "^8.0.0-beta.2",
     "babel-plugin-lodash": "^3.3.2",
     "babel-preset-minify": "^0.3.0",
     "common-tags": "^1.7.2",
     "del-cli": "^1.1.0",
-    "eslint": "^4.18.0",
+    "eslint": "^4.19.1",
     "eslint-config-airbnb": "^16.1.0",
     "eslint-config-prettier": "^2.9.0",
     "eslint-plugin-import": "^2.9.0",
     "eslint-plugin-jsx-a11y": "^6.0.3",
-    "eslint-plugin-react": "^7.6.1",
-    "husky": "^0.15.0-rc.8",
+    "eslint-plugin-react": "^7.7.0",
+    "husky": "^1.0.0-rc.1",
     "jest": "^22.4.2",
-    "lint-staged": "^7.0.0",
+    "lint-staged": "^7.0.4",
     "npm-run-all": "^4.1.2",
-    "prettier": "^1.11.1",
+    "prettier": "^1.12.0",
     "rxjs": "^5.0.0",
     "rxjs-tslint-rules": "^3.12.0",
     "serverless": "^1.26.1",
@@ -113,11 +123,11 @@
     "tslint-microsoft-contrib": "^5.0.3",
     "tslint-react": "^3.5.1",
     "typescript": "^2.8.1",
-    "typescript-eslint-parser": "^14.0.0",
+    "typescript-eslint-parser": "^15.0.0",
     "uglifyjs-webpack-plugin": "^1.2.4",
     "webpack": "3",
     "webpack-bundle-analyzer": "^2.11.1",
-    "yarnhook": "^0.1.1"
+    "yarnhook": "^0.2.0"
   },
   "lint-staged": {
     "**/*.md": [
@@ -138,8 +148,8 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "run-p --aggregate-output validate-filenames lint-staged",
-      "pre-push": "yarn pretest",
+      "pre-commit": "run-p -l -c --aggregate-output lint-staged pre-commit",
+      "pre-push": "yarn pre-push",
       "post-merge": "yarnhook",
       "post-checkout": "yarnhook",
       "post-rewrite": "yarnhook"
