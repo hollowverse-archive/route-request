@@ -2,10 +2,6 @@
   "scripts": {
     "check-ts": "run-p 'check-ts/*'",
     "pre-push": "yarn pretest",
-    "pre-commit": "yarn common-check",
-    "tslint": "yarn lint-ts"
-  },
-  "dependencies": {
-    "@hollowverse/utils": "^6.0.0"
+    "pre-commit": "yarn common-check"
   }
 }
