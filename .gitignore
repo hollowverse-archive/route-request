@@ -44,10 +44,6 @@ build.zip
 .serverless
 .webpack
 
-# Editor configs
-.vscode/**/*
-!.vscode/launch.json
-
 secrets/**/*
 !secrets/**/*.enc
 !secrets/**/*.d.ts
