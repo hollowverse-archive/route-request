@@ -14,14 +14,14 @@ const isPullRequest = IS_PULL_REQUEST !== 'false';
 async function main() {
   const buildCommands = ['yarn test'];
   const deploymentCommands = [
-    'NODE_ENV=production yarn serverless deploy --stage development',
+    'NODE_ENV=production yarn serverless deploy --stage production',
   ];
 
   let isDeployment = false;
   if (isPullRequest === true) {
     console.info('Skipping deployment commands in PRs');
     buildCommands.push(
-      'NODE_ENV=production yarn serverless package --stage development',
+      'NODE_ENV=production yarn serverless package --stage production'
     );
   } else {
     isDeployment = true;
@@ -29,7 +29,7 @@ async function main() {
 
   try {
     await executeCommands(
-      isDeployment ? [...buildCommands, ...deploymentCommands] : buildCommands,
+      isDeployment ? [...buildCommands, ...deploymentCommands] : buildCommands
     );
   } catch (e) {
     console.error('Build/deployment failed:', e);
