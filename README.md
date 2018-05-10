@@ -20,4 +20,5 @@ For branch previewing, `setHeadersOnOriginResponse` modifies the cache control h
 
 ## Architecture
 
-You can find out more about the roles these functions play in our [architecture documentation](https://github.com/hollowverse/architecture#readme).
+You can [read about our architecture](https://github.com/hollowverse/architecture#readme).
+to find out more about the roles these functions play in our overall architecture.
