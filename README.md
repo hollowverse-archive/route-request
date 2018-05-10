@@ -17,3 +17,8 @@ The functions work at different stages of CloudFront request processing (see the
 `route-request` can also be used to preview internal branches before they are ready for production. This works similarly to traffic splitting, except that it reads the target branch name from a cookie called `branch` or from a query string parameter with the same name (i.e. `/?branch=internal`). These are always checked before checking the `env` cookie so branch previewing can works even if the user has been assigned an environment.
 
 For branch previewing, `setHeadersOnOriginResponse` modifies the cache control headers such that the responses are not cached in CloudFront, because we usually need to see changes to internal branches as quickly as possible.
+
+## Architecture
+
+You can [read about our architecture](https://github.com/hollowverse/architecture#readme).
+to find out more about the roles these functions play in our overall architecture.
