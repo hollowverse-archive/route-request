@@ -1,5 +1,3 @@
-import { CloudFrontRequestEvent } from 'aws-lambda'; // tslint:disable-line:no-implicit-dependencies
-import { createLambdaHandler } from '@hollowverse/utils/helpers/createLambdaHandler';
 import bluebird from 'bluebird';
 import find from 'lodash/find';
 import get from 'lodash/get';
@@ -13,9 +11,9 @@ type CreateRouteRequestToOriginOptions = {
 export const createRouteRequestToOrigin = ({
   findEnvByName,
 }: CreateRouteRequestToOriginOptions) => async (
-  event: CloudFrontRequestEvent,
+  event: AWSLambda.CloudFrontRequestEvent,
 ) => {
-  const request = event.Records[0].cf.request;
+  const { request } = event.Records[0].cf;
 
   const branch: string | undefined = get(request.headers, [
     'x-hollowverse-requested-branch',
@@ -80,8 +78,6 @@ export const createRouteRequestToOrigin = ({
   return request;
 };
 
-export const routeRequestToOrigin = createLambdaHandler(
-  createRouteRequestToOrigin({
-    findEnvByName: findApiGatewayEnvByName,
-  }),
-);
+export const routeRequestToOrigin = createRouteRequestToOrigin({
+  findEnvByName: findApiGatewayEnvByName,
+});

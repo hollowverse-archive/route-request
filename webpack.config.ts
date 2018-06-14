@@ -1,18 +1,18 @@
 // tslint:disable:no-implicit-dependencies
+/* eslint import/no-extraneous-dependencies: ["error", {"devDependencies": true}] */
 import webpack from 'webpack';
 import slsw from 'serverless-webpack';
 import path from 'path';
-import UglifyJSPlugin from 'uglifyjs-webpack-plugin';
-import { mapValues } from 'lodash';
-import { ifProd, isDev } from '@hollowverse/utils/helpers/env';
+import { isProd } from '@hollowverse/utils/helpers/env';
 
 module.exports = {
+  mode: isProd ? 'production' : 'development',
   entry: slsw.lib.entries,
   target: 'node',
-  devtool: isDev ? 'source-map' : false,
+  devtool: 'source-map',
   output: {
     libraryTarget: 'commonjs',
-    path: path.resolve(__dirname, 'dist'),
+    path: path.resolve(__dirname, '.webpack'),
     filename: '[name].js',
   },
   stats: 'minimal',
@@ -42,28 +42,8 @@ module.exports = {
     ],
   },
   resolve: {
-    extensions: ['.tsx', '.ts', '.jsx', '.js'],
+    extensions: ['.ts', '.js'],
   },
+  plugins: [new webpack.WatchIgnorePlugin([/node_modules/])],
   externals: ['aws-sdk'],
-  plugins: [
-    new webpack.WatchIgnorePlugin([/node_modules/]),
-    new webpack.NoEmitOnErrorsPlugin(),
-    new webpack.optimize.ModuleConcatenationPlugin(),
-    new webpack.optimize.OccurrenceOrderPlugin(true),
-    new webpack.optimize.AggressiveMergingPlugin(),
-    new webpack.DefinePlugin(
-      mapValues(
-        {
-          'process.env.NODE_ENV': process.env.NODE_ENV,
-        },
-        v => JSON.stringify(v),
-      ),
-    ),
-    ...ifProd([
-      new UglifyJSPlugin({
-        parallel: true,
-        sourceMap: true,
-      }),
-    ]),
-  ],
 };

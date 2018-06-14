@@ -1,5 +1,3 @@
-import { CloudFrontResponseEvent } from 'aws-lambda'; // tslint:disable-line:no-implicit-dependencies
-import { createLambdaHandler } from '@hollowverse/utils/helpers/createLambdaHandler';
 import cookie from 'cookie';
 import get from 'lodash/get';
 
@@ -21,7 +19,7 @@ export const createSetHeadersOnOriginResponse = ({
   envCookieOptions,
   branchCookieOptions,
 }: CreateSetHeadersOnOriginResponseOptions) => async (
-  event: CloudFrontResponseEvent,
+  event: AWSLambda.CloudFrontResponseEvent,
 ) => {
   const { request, response } = event.Records[0].cf;
 
@@ -88,17 +86,15 @@ export const createSetHeadersOnOriginResponse = ({
   return response;
 };
 
-export const setHeadersOnOriginResponse = createLambdaHandler(
-  createSetHeadersOnOriginResponse({
-    isSetCookieAllowedForPath: path => {
-      if (
-        path.toLowerCase().startsWith('/static') ||
-        path.toLowerCase().startsWith('/log')
-      ) {
-        return false;
-      }
+export const setHeadersOnOriginResponse = createSetHeadersOnOriginResponse({
+  isSetCookieAllowedForPath: path => {
+    if (
+      path.toLowerCase().startsWith('/static') ||
+      path.toLowerCase().startsWith('/log')
+    ) {
+      return false;
+    }
 
-      return true;
-    },
-  }),
-);
+    return true;
+  },
+});

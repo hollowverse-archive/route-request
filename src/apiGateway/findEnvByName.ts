@@ -9,11 +9,12 @@ const createFindEnvByName = (pattern: RegExp) =>
       let env;
       let position: string | undefined;
 
+      /* eslint-disable no-await-in-loop,no-continue */
       do {
         const response = await apiGateway.getRestApis({ position }).promise();
 
         const apis = response.items;
-        position = response.position;
+        ({ position } = response);
 
         if (!apis) {
           break;
@@ -24,7 +25,7 @@ const createFindEnvByName = (pattern: RegExp) =>
             continue;
           }
 
-          const id = api.id;
+          const { id } = api;
 
           const { item: stages } = await apiGateway
             .getStages({
@@ -45,10 +46,11 @@ const createFindEnvByName = (pattern: RegExp) =>
           }
         }
       } while (!env && !!position);
+      /* eslint-enable no-await-in-loop,no-continue */
 
       return env || undefined;
     },
-    { maxAge: 300_000 }
+    { maxAge: 300_000 },
   );
 
 export const findEnvByName = createFindEnvByName(/-website$/gi);
