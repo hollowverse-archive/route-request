@@ -1,5 +1,3 @@
-import { CloudFrontRequestEvent } from 'aws-lambda'; // tslint:disable-line:no-implicit-dependencies
-import { createLambdaHandler } from '@hollowverse/utils/helpers/createLambdaHandler';
 import cookie from 'cookie';
 import weighted from 'weighted';
 import isBot from 'is-bot';
@@ -12,9 +10,9 @@ type CreateAssignEnvironmentToViewerRequestOptions = {
 export const createAssignEnvironmentToViewerRequest = ({
   publicBranches,
 }: CreateAssignEnvironmentToViewerRequestOptions) => async (
-  event: CloudFrontRequestEvent,
+  event: AWSLambda.CloudFrontRequestEvent,
 ) => {
-  const request = event.Records[0].cf.request;
+  const { request } = event.Records[0].cf;
 
   const params = qs.parse<Record<string, string | undefined>>(
     request.querystring,
@@ -71,11 +69,11 @@ export const createAssignEnvironmentToViewerRequest = ({
   return request;
 };
 
-export const assignEnvironmentToViewerRequest = createLambdaHandler(
-  createAssignEnvironmentToViewerRequest({
+export const assignEnvironmentToViewerRequest = createAssignEnvironmentToViewerRequest(
+  {
     publicBranches: {
       master: 0.75,
       beta: 0.25,
     },
-  }),
+  },
 );

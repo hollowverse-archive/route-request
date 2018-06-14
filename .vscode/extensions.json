@@ -11,6 +11,9 @@
     "kisstkondoros.csstriggers",
     "Orta.vscode-jest",
     "asvetliakov.snapshot-tools",
-    "dbaeumer.vscode-eslint"
+    "dbaeumer.vscode-eslint",
+    "codezombiech.gitignore",
+    "pflannery.vscode-versionlens",
+    "eg2.ts-tslint"
   ]
 }

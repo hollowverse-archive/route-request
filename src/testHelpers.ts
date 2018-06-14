@@ -1,23 +1,14 @@
-// tslint:disable no-implicit-dependencies no-non-null-assertion
-
+// tslint:disable no-non-null-assertion
 import bluebird from 'bluebird';
 import cookie from 'cookie';
-import {
-  Context,
-  CloudFrontResponseEvent,
-  CloudFrontRequest,
-  CloudFrontRequestEvent,
-  CloudFrontHeaders,
-  CloudFrontResponse,
-} from 'aws-lambda';
 import { times, get } from 'lodash';
 import { createAssignEnvironmentToViewerRequest } from './assignEnvironmentToViewerRequest';
 import { createRouteRequestToOrigin } from './routeRequestToOrigin';
 import { createSetHeadersOnOriginResponse } from './setHeadersOnOriginResponse';
 
 const toRequestEvent = (
-  request: CloudFrontRequest,
-): CloudFrontRequestEvent => ({
+  request: AWSLambda.CloudFrontRequest,
+): AWSLambda.CloudFrontRequestEvent => ({
   Records: [
     {
       cf: {
@@ -31,9 +22,9 @@ const toRequestEvent = (
   ],
 });
 
-const toResponseEvent = (request: CloudFrontRequest) => (
-  response: CloudFrontResponse,
-): CloudFrontResponseEvent => ({
+const toResponseEvent = (request: AWSLambda.CloudFrontRequest) => (
+  response: AWSLambda.CloudFrontResponse,
+): AWSLambda.CloudFrontResponseEvent => ({
   Records: [
     {
       cf: {
@@ -53,7 +44,9 @@ export const parseAllCookies = (
    * While the type of this is not explicitly declared as possibly `undefined`,
    * it could actually be `undefined` in real Lambda environments.
    */
-  headers: CloudFrontHeaders[keyof CloudFrontHeaders] | undefined,
+  headers:
+    | AWSLambda.CloudFrontHeaders[keyof AWSLambda.CloudFrontHeaders]
+    | undefined,
 ) => {
   if (headers) {
     return headers.map(header => cookie.parse(header.value)).reduce(
@@ -70,28 +63,24 @@ export const parseAllCookies = (
 type DeepPartial<T> = { [P in keyof T]?: DeepPartial<T[P]> };
 
 export type CreateTestContextOptions = {
-  contextOverrides?: DeepPartial<Context>;
+  contextOverrides?: DeepPartial<AWSLambda.Context>;
   publicBranches?: Record<string, number>;
-  getOriginResponse?(request: CloudFrontRequest): Promise<CloudFrontResponse>;
+  getOriginResponse?(
+    request: AWSLambda.CloudFrontRequest,
+  ): Promise<AWSLambda.CloudFrontResponse>;
   findEnvByName?(branch: string): Promise<string | undefined>;
   isSetCookieAllowedForPath?(path: string): boolean;
 };
 
 type UnPromisify<T> = T extends Promise<infer R> ? R : T;
 
-export type CreateAndRunTestResponseResult = Readonly<
-  UnPromisify<ReturnType<typeof createAndRunTestResponse>>
->;
-
-export type TestContext = Readonly<
-  UnPromisify<ReturnType<typeof createTestContext>>
->;
-
-const defaultGetOriginResponse = async (request: CloudFrontRequest) => ({
+const defaultGetOriginResponse = async (
+  request: AWSLambda.CloudFrontRequest,
+) => ({
   status: '200',
   statusDescription: 'OK',
   headers: {
-    ['x-actual-environment']: [
+    'x-actual-environment': [
       {
         key: 'x-actual-environment',
         value: request.headers.host[0].value,
@@ -101,7 +90,7 @@ const defaultGetOriginResponse = async (request: CloudFrontRequest) => ({
 });
 
 export type GetResponseResult = {
-  response: CloudFrontResponse;
+  response: AWSLambda.CloudFrontResponse;
   responseCookies: Record<string, string>;
   actualEnvironmentHost: string | undefined;
 };
@@ -132,7 +121,7 @@ export const createTestContext = async ({
     cookies,
     userAgent,
   }: GetTestResponseOptions = {}): Promise<GetResponseResult> => {
-    const headers: CloudFrontHeaders = {};
+    const headers: AWSLambda.CloudFrontHeaders = {};
 
     if (cookies) {
       headers.cookie = [
@@ -154,7 +143,7 @@ export const createTestContext = async ({
       ];
     }
 
-    const event: CloudFrontRequestEvent = {
+    const event: AWSLambda.CloudFrontRequestEvent = {
       Records: [
         {
           cf: {
@@ -226,6 +215,14 @@ export const createAndRunTestResponse = async (
     ...context,
   };
 };
+
+export type CreateAndRunTestResponseResult = Readonly<
+  UnPromisify<ReturnType<typeof createAndRunTestResponse>>
+>;
+
+export type TestContext = Readonly<
+  UnPromisify<ReturnType<typeof createTestContext>>
+>;
 
 export const runTestManyTimes = async (
   numTests = 300,
