@@ -11,7 +11,7 @@ script:
     -e AWS_SECRET_ACCESS_KEY
     -e AWS_REGION
     -e CLOUDFRONT_DISTRIBUTION_ID
-    hollowverse/build-env:lambda-6
+    hollowverse/build-env:lambda
 
 notifications:
   email: false
