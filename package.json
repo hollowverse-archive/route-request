@@ -23,7 +23,6 @@
     "pre-push": "yarn pretest",
     "pre-commit": "yarn common-check",
     "common-check": "run-p -c --aggregate-output check-prettier validate-filenames 'clown check' check-integrity",
-    "tslint": "yarn lint-ts",
     "jest": "TZ=UTC NODE_ENV=test jest",
     "clown": "clown",
     "check-integrity": "yarn check --integrity",
