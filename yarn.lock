@@ -755,16 +755,16 @@
     lodash "^4.17.4"
     sort-keys "^2.0.0"
 
-"@hollowverse/config@^36.0.0":
-  version "36.0.0"
-  resolved "https://registry.yarnpkg.com/@hollowverse/config/-/config-36.0.0.tgz#6adca4cc916732ec0fff108af65e2e1e863f9006"
+"@hollowverse/config@^41.0.0":
+  version "41.0.0"
+  resolved "https://registry.yarnpkg.com/@hollowverse/config/-/config-41.0.0.tgz#81cddfa198dbecdabe989da336a56760ab9bcf06"
 
-"@hollowverse/utils@^7.0.1":
-  version "7.0.1"
-  resolved "https://registry.yarnpkg.com/@hollowverse/utils/-/utils-7.0.1.tgz#f3c7175e7395becc11abe966878c1462853ece02"
+"@hollowverse/utils@^8.0.0":
+  version "8.0.0"
+  resolved "https://registry.yarnpkg.com/@hollowverse/utils/-/utils-8.0.0.tgz#0515f2bd65cb13fd6ededeab34ca8653b3bb5112"
   dependencies:
-    "@babel/polyfill" "^7.0.0-beta.44"
-    "@babel/runtime" "^7.0.0-beta.44"
+    "@babel/polyfill" "^7.0.0-beta.46"
+    "@babel/runtime" "^7.0.0-beta.46"
     bluebird "^3.5.1"
     common-tags "^1.7.2"
     glob "^7.1.2"
@@ -1489,12 +1489,13 @@ aws-sdk@*:
     xml2js "0.4.17"
     xmlbuilder "4.2.1"
 
-aws-sdk@2.205.0:
-  version "2.205.0"
-  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.205.0.tgz#1a93730253e2be027a4bd3af9248cbda0573de80"
+aws-sdk@2.235.1:
+  version "2.235.1"
+  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.235.1.tgz#b895da9482bb5d90b2f54c45203b7a3c1c2b7cea"
   dependencies:
     buffer "4.9.1"
-    events "^1.1.1"
+    events "1.1.1"
+    ieee754 "1.1.8"
     jmespath "0.15.0"
     querystring "0.2.0"
     sax "1.2.1"
@@ -3567,7 +3568,7 @@ event-stream@~3.3.0:
     stream-combiner "~0.0.4"
     through "~2.3.1"
 
-events@1.1.1, events@^1.0.0, events@^1.1.1:
+events@1.1.1, events@^1.0.0:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/events/-/events-1.1.1.tgz#9ebdb7635ad099c70dcc4c2a1f5004288e8bd924"
 
