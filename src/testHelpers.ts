@@ -60,6 +60,7 @@ export const parseAllCookies = (
   return {};
 };
 
+/* eslint-disable no-use-before-define */
 type DeepPartial<T> = { [P in keyof T]?: DeepPartial<T[P]> };
 
 export type CreateTestContextOptions = {

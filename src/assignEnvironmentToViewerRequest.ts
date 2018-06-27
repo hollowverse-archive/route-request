@@ -35,6 +35,7 @@ export const createAssignEnvironmentToViewerRequest = ({
     return request;
   }
 
+  /* eslint-disable prefer-destructuring */
   let env: string | undefined = cookies.env;
 
   if (env) {

@@ -5,7 +5,7 @@ import {
   CreateAndRunTestResponseResult,
 } from '../testHelpers';
 
-describe('Branch previewing', () => {
+describe('branch previewing', () => {
   let testResult: CreateAndRunTestResponseResult;
 
   beforeEach(async () => {
@@ -34,7 +34,7 @@ describe('Branch previewing', () => {
     );
   });
 
-  describe('Caching', () => {
+  describe('caching', () => {
     it('tells CDN not to cache the response', async () => {
       const cacheHeader = testResult.response.headers['cache-control'][0].value;
       expect(cacheHeader).toMatch(
@@ -43,7 +43,7 @@ describe('Branch previewing', () => {
     });
   });
 
-  describe('If the requested branch actually exists', () => {
+  describe('if the requested branch actually exists', () => {
     it('`branch` cookie always takes precedence over `env` cookie', async () => {
       const responses = await runTestManyTimes(100, {
         cookies: {
@@ -71,7 +71,7 @@ describe('Branch previewing', () => {
     });
   });
 
-  describe('If the requested branch does not exist', () => {
+  describe('if the requested branch does not exist', () => {
     it('fails loudly', async () => {
       expect.hasAssertions();
 

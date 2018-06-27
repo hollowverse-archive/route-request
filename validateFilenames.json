@@ -18,7 +18,8 @@
         "**/docker-compose.yml",
         "**/Dockerfile*",
         "**/LICENSE",
-        "**/README.md"
+        "**/README.md",
+        "**/clownOverrides/c__*"
       ]
     }
   ]
