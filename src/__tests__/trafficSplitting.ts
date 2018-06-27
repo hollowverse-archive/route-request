@@ -1,4 +1,3 @@
-// tslint:disable:no-non-null-assertion no-implicit-dependencies
 import {
   testBot,
   runTestManyTimes,
