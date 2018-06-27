@@ -1,0 +1,6 @@
+{
+  "rules": {
+    "no-implicit-dependencies": false,
+    "no-non-null-assertion": false
+  }
+}

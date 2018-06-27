@@ -1,4 +1,3 @@
-// tslint:disable:no-non-null-assertion no-implicit-dependencies
 import {
   testBot,
   runTestManyTimes,
@@ -8,7 +7,7 @@ import {
 import { oneLine } from 'common-tags';
 import { countBy, mapValues } from 'lodash';
 
-describe('Traffic splitting', () => {
+describe('traffic splitting', () => {
   it('picks a random environment based on defined weights', async () => {
     const numTests = 1000;
     const results = await runTestManyTimes(numTests);
@@ -79,7 +78,7 @@ describe('Traffic splitting', () => {
       expect(testResult.response.headers['set-cookie']).toBeInstanceOf(Array);
     });
 
-    it('Set-Cookie header includes `env` cookie', () => {
+    it('set-cookie header includes `env` cookie', () => {
       expect(testResult.responseCookies).toHaveProperty('env');
       expect(testResult.responseCookies.env).toMatch(/beta|master/);
     });
