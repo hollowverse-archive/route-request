@@ -142,10 +142,6 @@
       "prettier --write",
       "git add"
     ],
-    "**/!(package).json": [
-      "prettier --write",
-      "git add"
-    ],
     "**/*.js{x,}": [
       "eslint"
     ],
