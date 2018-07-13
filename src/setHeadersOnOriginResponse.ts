@@ -39,7 +39,7 @@ export const createSetHeadersOnOriginResponse = ({
     response.headers['cache-control'] = [
       {
         key: 'Cache-Control',
-        value: 'no-store, no-cache, proxy-revalidate',
+        value: 'max-age=3600, s-maxage=0, proxy-revalidate',
       },
     ];
   }
