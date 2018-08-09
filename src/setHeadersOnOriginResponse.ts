@@ -51,7 +51,7 @@ export const createSetHeadersOnOriginResponse = ({
   const envCookie =
     !branch && env
       ? cookie.serialize('env', env, {
-          maxAge: 24 * 60 * 60 * 1000,
+          maxAge: 24 * 60 * 60,
           httpOnly: true,
           secure: true,
           sameSite: 'lax',
@@ -62,7 +62,7 @@ export const createSetHeadersOnOriginResponse = ({
 
   const branchCookie = branch
     ? cookie.serialize('branch', branch, {
-        maxAge: 2 * 60 * 60 * 1000,
+        maxAge: 2 * 60 * 60,
         httpOnly: true,
         secure: true,
         sameSite: 'lax',
